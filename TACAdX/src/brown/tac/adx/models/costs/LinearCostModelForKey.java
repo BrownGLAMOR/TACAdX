@@ -1,5 +1,9 @@
 package brown.tac.adx.models.costs;
 
+/*
+ * Generates and stores random numbers for slope and y-intercept.
+ * Uses these as linear model variables to compute cost for impressions.
+ */
 public class LinearCostModelForKey extends CostModelForKey {
 
 	private double _yIntercept;

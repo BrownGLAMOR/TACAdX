@@ -41,6 +41,8 @@ public class Optimizer {
 		return _bidBundle;
 	}
 	
+	//Called by an opt algo.  It is centralized here so that 
+	//the bid bundle generation is decoupled from the algo used
 	public void generateBidBundleFromData(double[][] impAllocation){
 		//TODO: Take in output of final opt algo, convert to usable bid bundle
 	}
