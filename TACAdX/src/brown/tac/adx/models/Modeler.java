@@ -38,7 +38,9 @@ public class Modeler {
 		}
 		return pred;
 	}
-	
+	public LinkedList<Model> getModelList(){
+		return _modelList;
+	}
 	/*
 	 * Parses the XML file filename and fills in the model list
 	 */

@@ -1,7 +1,12 @@
 package brown.tac.adx.optimizationalgs.greedy;
 
+import java.util.LinkedList;
+
+import brown.tac.adx.models.Model;
 import brown.tac.adx.models.costs.CostModelForKey;
 import brown.tac.adx.models.revenue.RevenueModelForCampaign;
+import brown.tac.adx.optimizationalgs.OptimizationAlg;
+import brown.tac.adx.optimizationalgs.Optimizer;
 
 /**
  * A simple greedy algorithm to the AdX optimization problem. For a given problem instance,
@@ -12,8 +17,16 @@ import brown.tac.adx.models.revenue.RevenueModelForCampaign;
  *     sub-increments, and the lowest cost key for each sub-increment is greedily chosen.
  * @author sodomka
  */
-public class GreedyOptimizer {
+public class GreedyOptimizer extends OptimizationAlg{
+	
+	public GreedyOptimizer(LinkedList<Model> modelList, Optimizer optimizer) {
+		super(modelList, optimizer);
+	}
 
+	public void makeDecision(){
+		double[][] impAllocation = this.solve();
+		_optimizer.generateBidBundleFromData(impAllocation);
+	}
 	/**  
 	 * Greedily solves a given problem instance.
 	 * @param revenueModelForCampaign_c  An array of revenue models, one per campaign. 

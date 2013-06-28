@@ -142,6 +142,7 @@ public class BrownAgent extends Agent {
 	public BrownAgent() {
 		campaignReports = new LinkedList<CampaignReport>();
 		_modeler = new Modeler("");
+		_optimizer = new Optimizer("", _modeler.getModelList());
 		_dailyInfoList = new LinkedList<DailyInfo>();
 	}
 

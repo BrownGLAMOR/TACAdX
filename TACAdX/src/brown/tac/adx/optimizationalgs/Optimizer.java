@@ -3,8 +3,8 @@ package brown.tac.adx.optimizationalgs;
 import java.util.LinkedList;
 
 import tau.tac.adx.props.AdxBidBundle;
-
 import brown.tac.adx.models.Model;
+import brown.tac.adx.optimizationalgs.greedy.GreedyOptimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
 public class Optimizer {
@@ -19,8 +19,15 @@ public class Optimizer {
 	 */
 	AdxBidBundle _bidBundle;
 	
+	/*
+	 * Modeler reference to query models from within OptAlgos
+	 */
+	LinkedList<Model> _modelList;
 	
-	public Optimizer(String filename) {
+	public Optimizer(String filename, LinkedList<Model> modelList) {
+		_modelList = modelList;
+		_optimizationAlgList = new LinkedList<OptimizationAlg>();
+		_optimizationAlgList.add(new GreedyOptimizer(_modelList, this));
 		this.parseOptimizationAlgs(filename);
 	}
 
@@ -32,6 +39,10 @@ public class Optimizer {
 	
 	public AdxBidBundle getBidBundle() {
 		return _bidBundle;
+	}
+	
+	public void generateBidBundleFromData(double[][] impAllocation){
+		//TODO: Take in output of final opt algo, convert to usable bid bundle
 	}
 	
 	/*
