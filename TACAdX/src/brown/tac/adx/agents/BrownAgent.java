@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import brown.tac.adx.models.Modeler;
-import brown.tac.adx.optimizationalgs.Optimizer;
+import brown.tac.adx.optimization.Optimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
 import se.sics.isl.transport.Transportable;

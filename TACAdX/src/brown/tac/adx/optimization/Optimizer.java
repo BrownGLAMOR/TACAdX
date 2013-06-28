@@ -1,10 +1,10 @@
-package brown.tac.adx.optimizationalgs;
+package brown.tac.adx.optimization;
 
 import java.util.LinkedList;
 
 import tau.tac.adx.props.AdxBidBundle;
 import brown.tac.adx.models.Model;
-import brown.tac.adx.optimizationalgs.greedy.GreedyOptimizer;
+import brown.tac.adx.optimization.impressions.greedy.GreedyOptimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
 public class Optimizer {
