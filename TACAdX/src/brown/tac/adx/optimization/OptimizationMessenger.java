@@ -2,11 +2,11 @@ package brown.tac.adx.optimization;
 
 import tau.tac.adx.props.AdxBidBundle;
 
-public class OptimizationResults {
+public class OptimizationMessenger {
 	private AdxBidBundle _bidBundle;
 	private double _ucsBid;
 	private double _cmpBid;
-	public OptimizationResults(){
+	public OptimizationMessenger(){
 		
 	}
 	

@@ -136,13 +136,20 @@ public class BrownAgent extends Agent {
 	 * current day of simulation
 	 */
 	private int day = 0;
+	
+	/*
+	 * Container object for fluent inputs to optimization algo (i.e. campaign to bid on),
+	 * as well as the results of the optimization algo.
+	 */
+	private OptimizationMessenger _optMessenger;
 
 	private Random randomGenerator;
 
 	public BrownAgent() {
 		campaignReports = new LinkedList<CampaignReport>();
 		_modeler = new Modeler("");
-		_optimizer = new Optimizer("", _modeler.getModelList());
+		_optimizationMessenger = new OptimizationMessenger();
+		_optimizer = new Optimizer("", _modeler, _optimizationMessenger);
 		_dailyInfoList = new LinkedList<DailyInfo>();
 	}
 

@@ -1,12 +1,10 @@
 package brown.tac.adx.optimization.impressions.greedy;
 
-import java.util.LinkedList;
-
-import brown.tac.adx.models.Model;
+import brown.tac.adx.models.Modeler;
 import brown.tac.adx.models.costs.CostModelForKey;
 import brown.tac.adx.models.revenue.RevenueModelForCampaign;
 import brown.tac.adx.optimization.OptimizationAlg;
-import brown.tac.adx.optimization.Optimizer;
+import brown.tac.adx.optimization.OptimizationMessenger;
 
 /**
  * A simple greedy algorithm to the AdX optimization problem. For a given problem instance,
@@ -19,13 +17,13 @@ import brown.tac.adx.optimization.Optimizer;
  */
 public class GreedyOptimizer extends OptimizationAlg{
 	
-	public GreedyOptimizer(LinkedList<Model> modelList, Optimizer optimizer) {
-		super(modelList, optimizer);
+	public GreedyOptimizer(Modeler modeler, OptimizationMessenger optMessenger) {
+		super(modeler, optMessenger);
 	}
 
 	public void makeDecision(){
-//		double[][] impAllocation = this.solve();
-//		_optimizer.generateBidBundleFromData(impAllocation);
+		double[][] impAllocation; //this.solve();
+		
 	}
 	/**  
 	 * Greedily solves a given problem instance.

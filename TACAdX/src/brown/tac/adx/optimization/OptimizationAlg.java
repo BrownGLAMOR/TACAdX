@@ -8,13 +8,13 @@ public abstract class OptimizationAlg {
 	 */
 	protected Modeler _modeler;
 	/*
-	 * Takes in optimizer ref to update its stored bid bundle
+	 * Takes in optimization messenger to liase between opt algos and agent
 	 */
-	protected Optimizer _optimizer;
+	protected OptimizationMessenger _optMessenger;
 	
-	protected OptimizationAlg(Modeler modeler, Optimizer optimizer){
+	protected OptimizationAlg(Modeler modeler, OptimizationMessenger optMessenger){
 		_modeler = modeler;
-		_optimizer = optimizer;
+		_optMessenger = optMessenger;
 	}
 	abstract void makeDecision();
 }
