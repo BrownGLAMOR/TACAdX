@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import brown.tac.adx.models.Modeler;
+import brown.tac.adx.optimization.OptimizationMessenger;
 import brown.tac.adx.optimization.Optimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
@@ -141,7 +142,7 @@ public class BrownAgent extends Agent {
 	 * Container object for fluent inputs to optimization algo (i.e. campaign to bid on),
 	 * as well as the results of the optimization algo.
 	 */
-	private OptimizationMessenger _optMessenger;
+	private OptimizationMessenger _optimizationMessenger;
 
 	private Random randomGenerator;
 

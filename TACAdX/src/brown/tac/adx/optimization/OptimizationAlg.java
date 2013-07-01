@@ -16,5 +16,5 @@ public abstract class OptimizationAlg {
 		_modeler = modeler;
 		_optMessenger = optMessenger;
 	}
-	abstract void makeDecision();
+	public abstract void makeDecision();
 }
