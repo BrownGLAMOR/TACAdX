@@ -236,11 +236,13 @@ public class BrownAgent extends Agent {
 	/**
 	 * Process the reported set of publishers
 	 * 
+	 * Is it necessary to recalculate this every day? --Ezra
 	 * @param publisherCatalog
 	 */
 	private void handlePublisherCatalog(PublisherCatalog publisherCatalog) {
 		this.publisherCatalog = publisherCatalog;
 		generateAdxQuerySpace();
+		_optimizationMessenger.setQueries(queries);
 	}
 
 	/**
@@ -386,14 +388,14 @@ public class BrownAgent extends Agent {
 		//AdxBidBundle bidBundle = _optimizer.makeDecisions(prediction);
 		
 		// Make calls to sendMessage to tell the server about our decisions
-		
-		//just call this for now. But we should just be getting the 
-		// bid bundle from the optimizer
-		updateBids();
-		
-		//this should be here
-		//log.info("Day " + day + ": Sending BidBundle");
-		//sendMessage(adxAgentAddress, bidBundle);
+		bidBundle = _optimizationMessenger.getBidBundle();
+		if (bidBundle != null) {
+			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
+			// the AdX server
+			//TODO: We should call this after the optimizer makes decisions
+			log.info("Day " + day + ": Sending BidBundle");
+			sendMessage(adxAgentAddress, bidBundle);
+		}
 		
 		log.info("Day " + day + " ended. Starting next day");
 		++day;

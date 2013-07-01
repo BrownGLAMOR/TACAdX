@@ -1,5 +1,6 @@
 package brown.tac.adx.optimization.impressions.greedy;
 
+import tau.tac.adx.props.AdxBidBundle;
 import brown.tac.adx.models.Modeler;
 import brown.tac.adx.models.costs.CostModelForKey;
 import brown.tac.adx.models.revenue.RevenueModelForCampaign;
@@ -22,7 +23,9 @@ public class GreedyOptimizer extends OptimizationAlg{
 	}
 
 	public void makeDecision(){
-		double[][] impAllocation; //this.solve();
+		double[][] impAllocation; //this.solve()
+		AdxBidBundle bidBundle = new AdxBidBundle();
+		_optMessenger.setBidBundle(bidBundle);
 		
 	}
 	/**  
