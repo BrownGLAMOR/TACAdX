@@ -1,6 +1,7 @@
 package brown.tac.adx.optimization.impressions.greedy;
 
 import tau.tac.adx.props.AdxBidBundle;
+import tau.tac.adx.props.AdxQuery;
 import brown.tac.adx.models.Modeler;
 import brown.tac.adx.models.costs.CostModelForKey;
 import brown.tac.adx.models.revenue.RevenueModelForCampaign;
@@ -44,15 +45,17 @@ public class GreedyOptimizer extends OptimizationAlg{
 	 * @return A matrix of doubles, where x_kc[k][c] specifies the number of impressions to allocate
 	 *  from key k to campaign c.
 	 */
-	public static double[][] solve(
+	public double[][] solve(
 			RevenueModelForCampaign[] revenueModelForCampaign_c,
 			CostModelForKey[] costModelForKey_k,
-			boolean[][] isFeasibleToAllocate_kc,
+			boolean[][] isFeasibleToAllocate_kc, //will get rid of this, see below
 			double[][] effectiveImpressionsMultiplier_kc,
 			double effectiveImpressionIncrement,
 			int numSubIncrements
 			) {
-
+		AdxQuery[] keys = _optMessenger.getQueries(); //will replace isFeasibleToallocate_kc
+		
+		
 		int numKeys = costModelForKey_k.length;
 		int numCampaigns = revenueModelForCampaign_c.length;
 		double effectiveImpressionSubIncrement = effectiveImpressionIncrement / numSubIncrements;

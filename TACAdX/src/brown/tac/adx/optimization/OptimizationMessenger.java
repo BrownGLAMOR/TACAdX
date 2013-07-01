@@ -1,5 +1,7 @@
 package brown.tac.adx.optimization;
 
+import java.util.Map;
+
 import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
 
@@ -8,7 +10,7 @@ public class OptimizationMessenger {
 	private double _ucsBid;
 	private double _cmpBid;
 	private AdxQuery[] _queries; //using Mariano's terminology -- equivalent to user-keys
-	
+	private Map<Integer, CampaignData> myCampaign;
 	
 
 	public OptimizationMessenger(){
