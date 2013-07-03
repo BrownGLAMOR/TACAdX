@@ -3,6 +3,7 @@ package brown.tac.adx.optimization.impressions.greedy;
 import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
 import brown.tac.adx.models.Modeler;
+import brown.tac.adx.models.ModelerAPI;
 import brown.tac.adx.models.costs.CostModelForKey;
 import brown.tac.adx.models.revenue.RevenueModelForCampaign;
 import brown.tac.adx.optimization.OptimizationAlg;
@@ -17,9 +18,9 @@ import brown.tac.adx.optimization.OptimizationMessenger;
  *     sub-increments, and the lowest cost key for each sub-increment is greedily chosen.
  * @author sodomka
  */
-public class GreedyOptimizer extends OptimizationAlg{
+public class GreedyOptimizer extends ImpressionsOptimizer{
 	
-	public GreedyOptimizer(Modeler modeler, OptimizationMessenger optMessenger) {
+	public GreedyOptimizer(ModelerAPI modeler, OptimizationMessenger optMessenger) {
 		super(modeler, optMessenger);
 	}
 
@@ -29,6 +30,7 @@ public class GreedyOptimizer extends OptimizationAlg{
 		_optMessenger.setBidBundle(bidBundle);
 		
 	}
+	
 	/**  
 	 * Greedily solves a given problem instance.
 	 * @param revenueModelForCampaign_c  An array of revenue models, one per campaign. 

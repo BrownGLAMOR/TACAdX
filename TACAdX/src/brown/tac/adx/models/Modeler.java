@@ -2,6 +2,8 @@ package brown.tac.adx.models;
 
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 //Many things to import for a DOM parser
 import javax.xml.parsers.DocumentBuilderFactory; 
@@ -10,15 +12,19 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList; 
 import org.w3c.dom.Node; 
 import org.w3c.dom.Element; 
+
+import tau.tac.adx.props.AdxQuery;
+
 import java.io.File; 
 
+import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.usermodels.*;
 import brown.tac.adx.predictions.DailyPrediction;
 
 /**
  * Class containing a list of models and updating them in order of dependencies
  */
-public class Modeler {
+public class Modeler implements ModelerAPI {
 	
 	/*
 	 * List of models
@@ -77,6 +83,37 @@ public class Modeler {
 //			e.printStackTrace(); 
 //		}
 		
+	}
+
+	@Override
+	public double getCostForImpressions(String key, double impressions) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getRevenueForEffectiveImpressions(String campaignID,
+			double effectiveImpressions) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getBidForImpressions(String key, double impressions) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public List<AdxQuery> getKeys() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<Integer, CampaignData> getCampaignMap() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

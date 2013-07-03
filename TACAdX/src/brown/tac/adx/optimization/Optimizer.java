@@ -4,6 +4,7 @@ import java.util.LinkedList;
 
 import tau.tac.adx.props.AdxBidBundle;
 import brown.tac.adx.models.Modeler;
+import brown.tac.adx.models.ModelerAPI;
 import brown.tac.adx.optimization.impressions.greedy.GreedyOptimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
@@ -22,14 +23,14 @@ public class Optimizer {
 	/*
 	 * Modeler reference to query models from within OptAlgos
 	 */
-	Modeler _modeler;
+	ModelerAPI _modeler;
 	
 	/*
 	 * OptMessenger is a liaison between the agent and the opt algos
 	 */
 	OptimizationMessenger _optMessenger;
 	
-	public Optimizer(String filename, Modeler modeler, OptimizationMessenger optMessenger) {
+	public Optimizer(String filename, ModelerAPI modeler, OptimizationMessenger optMessenger) {
 		_modeler = modeler;
 		_optMessenger = optMessenger;
 		_optimizationAlgList = new LinkedList<OptimizationAlg>();

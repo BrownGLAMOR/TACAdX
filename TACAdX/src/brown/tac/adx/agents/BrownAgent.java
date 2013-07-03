@@ -1,7 +1,6 @@
 package brown.tac.adx.agents;
 
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -11,11 +10,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import brown.tac.adx.models.Modeler;
-import brown.tac.adx.optimization.OptimizationMessenger;
-import brown.tac.adx.optimization.Optimizer;
-import brown.tac.adx.predictions.DailyPrediction;
 
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
@@ -29,9 +23,7 @@ import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
 import tau.tac.adx.props.PublisherCatalog;
 import tau.tac.adx.props.PublisherCatalogEntry;
-import tau.tac.adx.report.adn.AdNetworkKey;
 import tau.tac.adx.report.adn.AdNetworkReport;
-import tau.tac.adx.report.adn.AdNetworkReportEntry;
 import tau.tac.adx.report.adn.MarketSegment;
 import tau.tac.adx.report.demand.AdNetBidMessage;
 import tau.tac.adx.report.demand.AdNetworkDailyNotification;
@@ -41,6 +33,10 @@ import tau.tac.adx.report.demand.CampaignReportKey;
 import tau.tac.adx.report.demand.InitialCampaignMessage;
 import tau.tac.adx.report.publisher.AdxPublisherReport;
 import tau.tac.adx.report.publisher.AdxPublisherReportEntry;
+import brown.tac.adx.models.Modeler;
+import brown.tac.adx.models.ModelerAPI;
+import brown.tac.adx.optimization.OptimizationMessenger;
+import brown.tac.adx.optimization.Optimizer;
 import edu.umich.eecs.tac.props.Ad;
 import edu.umich.eecs.tac.props.BankStatus;
 
@@ -121,7 +117,7 @@ public class BrownAgent extends Agent {
 	/*
 	 * Container object for models
 	 */
-	Modeler _modeler;
+	ModelerAPI _modeler;
 	
 	/*
 	 * Container Object for optimizers
@@ -148,7 +144,7 @@ public class BrownAgent extends Agent {
 
 	public BrownAgent() {
 		campaignReports = new LinkedList<CampaignReport>();
-		_modeler = new Modeler("");
+		_modeler = (ModelerAPI) new Modeler("");
 		_optimizationMessenger = new OptimizationMessenger();
 		_optimizer = new Optimizer("", _modeler, _optimizationMessenger);
 		_dailyInfoList = new LinkedList<DailyInfo>();
@@ -626,66 +622,7 @@ public class BrownAgent extends Agent {
 		}
 	}
 
-	private class CampaignData {
-		/* campaign attributes as set by server */
-		Long reachImps;
-		long dayStart;
-		long dayEnd;
-		Set<MarketSegment> targetSegments;
-		double videoCoef;
-		double mobileCoef;
-		int id;
-
-		/* campaign info as reported */
-		CampaignStats stats;
-		double budget;
-
-		public CampaignData(InitialCampaignMessage icm) {
-			reachImps = icm.getReachImps();
-			dayStart = icm.getDayStart();
-			dayEnd = icm.getDayEnd();
-			targetSegments = icm.getTargetSegment();
-			videoCoef = icm.getVideoCoef();
-			mobileCoef = icm.getMobileCoef();
-			id = icm.getId();
-
-			stats = new CampaignStats(0, 0, 0);
-			budget = 0.0;
-		}
-
-		public void setBudget(double d) {
-			budget = d;
-		}
-
-		public CampaignData(CampaignOpportunityMessage com) {
-			dayStart = com.getDayStart();
-			dayEnd = com.getDayEnd();
-			id = com.getId();
-			reachImps = com.getReachImps();
-			targetSegments = com.getTargetSegment();
-			mobileCoef = com.getMobileCoef();
-			videoCoef = com.getVideoCoef();
-			stats = new CampaignStats(0, 0, 0);
-			budget = 0.0;
-		}
-
-		@Override
-		public String toString() {
-			return "Campaign ID " + id + ": " + "day " + dayStart + " to "
-					+ dayEnd + " " + Arrays.toString(targetSegments.toArray())+ ", reach: "
-					+ reachImps + " coefs: (v=" + videoCoef + ", m="
-					+ mobileCoef + ")";
-		}
-
-		int impsTogo() {
-			return (int) Math.max(0, reachImps - stats.getTargetedImps());
-		}
-
-		void setStats(CampaignStats s) {
-			stats.setValues(s);
-		}
-
-	}
+	
 
 
 }
