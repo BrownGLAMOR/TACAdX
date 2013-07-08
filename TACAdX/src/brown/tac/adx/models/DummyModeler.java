@@ -56,7 +56,7 @@ public class DummyModeler implements ModelerAPI {
 	@Override
 	public double getRevenueForEffectiveImpressions(int campaignID,
 			double effectiveImpressions) {
-		return (5*effectiveImpressions)%_campaigns.get(campaignID).getReachImps();
+		return (5*effectiveImpressions)%300;
 	}
 
 	@Override
