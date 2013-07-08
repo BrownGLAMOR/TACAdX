@@ -25,16 +25,12 @@ public class Optimizer {
 	 */
 	ModelerAPI _modeler;
 	
-	/*
-	 * OptMessenger is a liaison between the agent and the opt algos
-	 */
-	OptimizationMessenger _optMessenger;
+
 	
-	public Optimizer(String filename, ModelerAPI modeler, OptimizationMessenger optMessenger) {
+	public Optimizer(String filename, ModelerAPI modeler) {
 		_modeler = modeler;
-		_optMessenger = optMessenger;
 		_optimizationAlgList = new LinkedList<OptimizationAlg>();
-		_optimizationAlgList.add(new GreedyOptimizer(_modeler, _optMessenger));
+		_optimizationAlgList.add(new GreedyOptimizer(_modeler));
 		this.parseOptimizationAlgs(filename);
 	}
 

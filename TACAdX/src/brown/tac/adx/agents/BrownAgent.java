@@ -35,7 +35,6 @@ import tau.tac.adx.report.publisher.AdxPublisherReport;
 import tau.tac.adx.report.publisher.AdxPublisherReportEntry;
 import brown.tac.adx.models.Modeler;
 import brown.tac.adx.models.ModelerAPI;
-import brown.tac.adx.optimization.OptimizationMessenger;
 import brown.tac.adx.optimization.Optimizer;
 import edu.umich.eecs.tac.props.Ad;
 import edu.umich.eecs.tac.props.BankStatus;
@@ -134,19 +133,14 @@ public class BrownAgent extends Agent {
 	 */
 	private int day = 0;
 	
-	/*
-	 * Container object for fluent inputs to optimization algo (i.e. campaign to bid on),
-	 * as well as the results of the optimization algo.
-	 */
-	private OptimizationMessenger _optimizationMessenger;
+
 
 	private Random randomGenerator;
 
 	public BrownAgent() {
 		campaignReports = new LinkedList<CampaignReport>();
 		_modeler = (ModelerAPI) new Modeler("");
-		_optimizationMessenger = new OptimizationMessenger();
-		_optimizer = new Optimizer("", _modeler, _optimizationMessenger);
+		_optimizer = new Optimizer("", _modeler);
 		_dailyInfoList = new LinkedList<DailyInfo>();
 	}
 
@@ -238,7 +232,6 @@ public class BrownAgent extends Agent {
 	private void handlePublisherCatalog(PublisherCatalog publisherCatalog) {
 		this.publisherCatalog = publisherCatalog;
 		generateAdxQuerySpace();
-		_optimizationMessenger.setQueries(queries);
 	}
 
 	/**
@@ -384,7 +377,6 @@ public class BrownAgent extends Agent {
 		//AdxBidBundle bidBundle = _optimizer.makeDecisions(prediction);
 		
 		// Make calls to sendMessage to tell the server about our decisions
-		bidBundle = _optimizationMessenger.getBidBundle();
 		if (bidBundle != null) {
 			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
 			// the AdX server

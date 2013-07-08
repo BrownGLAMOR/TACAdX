@@ -1,13 +1,12 @@
 package brown.tac.adx.optimization.impressions.greedy;
 
+import java.util.Map;
+
 import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
-import brown.tac.adx.models.Modeler;
+import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.ModelerAPI;
-import brown.tac.adx.models.costs.CostModelForKey;
-import brown.tac.adx.models.revenue.RevenueModelForCampaign;
-import brown.tac.adx.optimization.OptimizationAlg;
-import brown.tac.adx.optimization.OptimizationMessenger;
+import edu.umich.eecs.tac.props.Ad;
 
 /**
  * A simple greedy algorithm to the AdX optimization problem. For a given problem instance,
@@ -20,14 +19,22 @@ import brown.tac.adx.optimization.OptimizationMessenger;
  */
 public class GreedyOptimizer extends ImpressionsOptimizer{
 	
-	public GreedyOptimizer(ModelerAPI modeler, OptimizationMessenger optMessenger) {
-		super(modeler, optMessenger);
+	public GreedyOptimizer(ModelerAPI modeler) {
+		super(modeler);
 	}
 
 	public void makeDecision(){
-		double[][] impAllocation; //this.solve()
+		AdxQuery[] keys = _modeler.getKeys();
+		Map<Integer, CampaignData> campaignMap = _modeler.getCampaignMap();
+		Integer[] campaignList = (Integer[]) campaignMap.keySet().toArray();
+		double[][] allocation_kc = this.solve(keys, campaignMap,campaignList, 5, 2);
 		AdxBidBundle bidBundle = new AdxBidBundle();
-		_optMessenger.setBidBundle(bidBundle);
+		for (int k = 0; k<keys.length;k++){
+			for (int c = 0; c<campaignList.length; c++){
+				bidBundle.addQuery(keys[k], _modeler.getBidForImpressions(keys[k].toString(), allocation_kc[k][c]),
+					new Ad(null), campaignList[c], (int)Math.round(allocation_kc[k][c])); //weight is equivalent to normalized value of bid
+			}
+		}
 		
 	}
 	
@@ -48,18 +55,14 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 	 *  from key k to campaign c.
 	 */
 	public double[][] solve(
-			RevenueModelForCampaign[] revenueModelForCampaign_c,
-			CostModelForKey[] costModelForKey_k,
-			boolean[][] isFeasibleToAllocate_kc, //will get rid of this, see below
-			double[][] effectiveImpressionsMultiplier_kc,
+			AdxQuery[] keys,
+			Map<Integer, CampaignData> campaignMap,
+			Integer[] campaignList, //That this is the same for caller and callee eases construction of bid bundles
 			double effectiveImpressionIncrement,
 			int numSubIncrements
 			) {
-		AdxQuery[] keys = _optMessenger.getQueries(); //will replace isFeasibleToallocate_kc
-		
-		
-		int numKeys = costModelForKey_k.length;
-		int numCampaigns = revenueModelForCampaign_c.length;
+		int numKeys = keys.length;
+		int numCampaigns = campaignMap.size();
 		double effectiveImpressionSubIncrement = effectiveImpressionIncrement / numSubIncrements;
 		
 		double[][] x_kc = new double[numKeys][numCampaigns]; // number of impressions to allocate from key k to campaign c.
@@ -73,24 +76,26 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 
 			// Find the next campaign to increment.
 			for (int c=0; c<numCampaigns; c++) {
-
 				// Get revenue for incrementing that campaign
-				double revenueForIncrement = revenueModelForCampaign_c[c].getRevenueForEffectiveImpressions(z_c[c] + effectiveImpressionIncrement) -
-						revenueModelForCampaign_c[c].getRevenueForEffectiveImpressions(z_c[c]);
+				double revenueForIncrement = _modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c]+effectiveImpressionIncrement)-
+						_modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c]);
 
 				// Get costs associated with incrementing that campaign.
 				double costForIncrement = 0;
 				double[][] potentialIncrement_kc = new double[numKeys][numCampaigns];
+				CampaignData currCampaign = campaignMap.get(campaignList[c]);
 				for (int i=0; i<numSubIncrements; i++) {
 					// Choose the sub-increment with the lowest marginal cost
 					double cheapestSubIncrementCost = Double.POSITIVE_INFINITY;
 					int cheapestSubIncrementKey = -1;
 					for (int k=0; k<numKeys; k++) {
-						if (isFeasibleToAllocate_kc[k][c]) {
-							double impressionSubIncrement = effectiveImpressionSubIncrement / effectiveImpressionsMultiplier_kc[k][c];
+						AdxQuery currKey = keys[i];
+						if (currCampaign.isFeasibleToAllocate(keys[k].getMarketSegments())) {
+							double impressionSubIncrement = effectiveImpressionSubIncrement /
+									currCampaign.effectiveImpressionsMultiplier(currKey.getAdType(), currKey.getDevice());
 							double subIncrementCost = 
-									costModelForKey_k[k].getCostForImpressions(y_k[k] + potentialIncrement_kc[k][c] + impressionSubIncrement) -
-									costModelForKey_k[k].getCostForImpressions(y_k[k] + potentialIncrement_kc[k][c]);
+									_modeler.getCostForImpressions(currKey.toString(),y_k[k]+impressionSubIncrement+potentialIncrement_kc[k][c])-
+									_modeler.getCostForImpressions(currKey.toString(), y_k[k] + potentialIncrement_kc[k][c]);
 							if (subIncrementCost < cheapestSubIncrementCost) {
 								cheapestSubIncrementKey = k;
 								cheapestSubIncrementCost = subIncrementCost;
@@ -98,7 +103,8 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 						}
 					}
 
-					double impressionSubIncrement = effectiveImpressionSubIncrement / effectiveImpressionsMultiplier_kc[cheapestSubIncrementKey][c];
+					double impressionSubIncrement = effectiveImpressionSubIncrement / 
+							currCampaign.effectiveImpressionsMultiplier(keys[cheapestSubIncrementKey].getAdType(), keys[cheapestSubIncrementKey].getDevice());
 					potentialIncrement_kc[cheapestSubIncrementKey][c] += impressionSubIncrement;
 					costForIncrement += cheapestSubIncrementCost;
 				}
