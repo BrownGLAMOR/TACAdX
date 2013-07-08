@@ -61,7 +61,9 @@ public class CampaignData {
 		stats = new CampaignStats(0, 0, 0);
 		budget = 0.0;
 	}
-	
+	public double getReachImps(){
+		return reachImps;
+	}
 	public boolean isFeasibleToAllocate(Set<MarketSegment> segmentsList){
 		Set<MarketSegment> intersection = new HashSet<MarketSegment>(segmentsList);
 		intersection.retainAll(targetSegments);   //nondestructively calculating intersection

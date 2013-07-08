@@ -11,10 +11,14 @@ import tau.tac.adx.props.AdxQuery;
 import tau.tac.adx.report.adn.MarketSegment;
 import tau.tac.adx.report.demand.InitialCampaignMessage;
 import brown.tac.adx.agents.CampaignData;
+import brown.tac.adx.models.costs.CostModelForKey;
+import brown.tac.adx.models.costs.DiscreteCostModelForKeyOne;
+import brown.tac.adx.models.costs.DiscreteCostModelForKeyTwo;
 
 public class DummyModeler implements ModelerAPI {
 	private AdxQuery[] _keys;
 	private Map<Integer, CampaignData> _campaigns;
+	private CostModelForKey[] _costModels = {new DiscreteCostModelForKeyOne(), new DiscreteCostModelForKeyTwo()};
 	public DummyModeler(){
 		_keys = new AdxQuery[2];
 		Set<MarketSegment> markSegListOne = new HashSet<MarketSegment>();
@@ -42,23 +46,22 @@ public class DummyModeler implements ModelerAPI {
 	@Override
 	public double getCostForImpressions(String key, double impressions) {
 		if (key==_keys[0].toString()){
-			continue;
+			return _costModels[0].getCostForImpressions(impressions);
 		}
 		else{
-			
+			return _costModels[1].getCostForImpressions(impressions);
 		}
 	}
 
 	@Override
 	public double getRevenueForEffectiveImpressions(int campaignID,
 			double effectiveImpressions) {
-		return (5*effectiveImpressions)%100;
+		return (5*effectiveImpressions)%_campaigns.get(campaignID).getReachImps();
 	}
 
 	@Override
 	public double getBidForImpressions(String key, double impressions) {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getCostForImpressions(key, impressions) + 5;
 	}
 
 	public AdxQuery[] getKeys() {
