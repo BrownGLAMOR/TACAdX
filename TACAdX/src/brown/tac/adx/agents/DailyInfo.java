@@ -1,15 +1,19 @@
 package brown.tac.adx.agents;
 
+import java.util.HashMap;
+
 import se.sics.tasim.props.SimulationStatus;
 import se.sics.tasim.props.StartInfo;
 import tau.tac.adx.props.PublisherCatalog;
-//import tau.tac.adx.report.adn.AdNetworkReport;
+import tau.tac.adx.report.adn.AdNetworkKey;
+import tau.tac.adx.report.adn.AdNetworkReport;
 import tau.tac.adx.report.demand.AdNetworkDailyNotification;
 import tau.tac.adx.report.demand.CampaignOpportunityMessage;
 import tau.tac.adx.report.demand.CampaignReport;
 import tau.tac.adx.report.demand.InitialCampaignMessage;
-//import tau.tac.adx.report.publisher.AdxPublisherReport;
 import edu.umich.eecs.tac.props.BankStatus;
+//import tau.tac.adx.report.adn.AdNetworkReport;
+//import tau.tac.adx.report.publisher.AdxPublisherReport;
 
 public class DailyInfo {
 	
@@ -33,8 +37,9 @@ public class DailyInfo {
 	
 	// Not used, as far as we know (Betsy)
 	//AdxPublisherReport publisherReport;
-	//AdNetworkReport adNetReport;
-	
+	AdNetworkReport adNetReport;
+	HashMap<AdNetworkKey, Double> dailyBids;
+
 	public DailyInfo(int day) {
 		_day = day;
 	}
@@ -63,6 +68,12 @@ public class DailyInfo {
 	}
 	public void setAdNetworkDailyNotification(AdNetworkDailyNotification adNetDailyNotification){
 		this.adNetDailyNotification = adNetDailyNotification;
+	}
+	public void setAdNetworkReport(AdNetworkReport adNetReport){
+		this.adNetReport = adNetReport;
+	}
+	public void setDailyBids(HashMap<AdNetworkKey, Double> dailyBids) {
+		this.dailyBids = dailyBids;
 	}
 	public void setSimulationStatus(SimulationStatus simulationStatus){
 		this.simulationStatus = simulationStatus;
@@ -100,6 +111,12 @@ public class DailyInfo {
 	}
 	public AdNetworkDailyNotification getAdNetworkDailyNotification( ){
 		return adNetDailyNotification;
+	}
+	public AdNetworkReport getAdNetworkReport( ){
+		return adNetReport;
+	}
+	public HashMap<AdNetworkKey, Double> getDailyBids() {
+		return dailyBids;
 	}
 	public SimulationStatus getSimulationStatus(){
 		return simulationStatus;

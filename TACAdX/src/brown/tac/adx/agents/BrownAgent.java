@@ -12,10 +12,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import brown.tac.adx.models.Modeler;
-import brown.tac.adx.optimizationalgs.Optimizer;
-import brown.tac.adx.predictions.DailyPrediction;
-
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
 import se.sics.tasim.aw.Message;
@@ -30,7 +26,6 @@ import tau.tac.adx.props.PublisherCatalog;
 import tau.tac.adx.props.PublisherCatalogEntry;
 import tau.tac.adx.report.adn.AdNetworkKey;
 import tau.tac.adx.report.adn.AdNetworkReport;
-import tau.tac.adx.report.adn.AdNetworkReportEntry;
 import tau.tac.adx.report.adn.MarketSegment;
 import tau.tac.adx.report.demand.AdNetBidMessage;
 import tau.tac.adx.report.demand.AdNetworkDailyNotification;
@@ -40,6 +35,9 @@ import tau.tac.adx.report.demand.CampaignReportKey;
 import tau.tac.adx.report.demand.InitialCampaignMessage;
 import tau.tac.adx.report.publisher.AdxPublisherReport;
 import tau.tac.adx.report.publisher.AdxPublisherReportEntry;
+import brown.tac.adx.models.CostModel;
+import brown.tac.adx.models.Modeler;
+import brown.tac.adx.optimizationalgs.Optimizer;
 import edu.umich.eecs.tac.props.Ad;
 import edu.umich.eecs.tac.props.BankStatus;
 
@@ -151,13 +149,15 @@ public class BrownAgent extends Agent {
 		
 		//if the dailyinfo list has not been updated, update it. 
 		if (_dailyInfoList.size()== day) {
-			_dailyInfoList.add(day, new DailyInfo(day));
+			DailyInfo di = new DailyInfo(day);
+			di.setDailyBids(bidPrices);
+			_dailyInfoList.add(day, di);
 		}
 		
 		try {
 			
 			Transportable content = message.getContent();
-			
+			DailyInfo newDay = _dailyInfoList.get(day);
 			
 			if(content==null){
 				System.out.println("NULL");
@@ -169,31 +169,39 @@ public class BrownAgent extends Agent {
 			if (content instanceof InitialCampaignMessage) {
 				System.out.println("init campaign");
 				handleInitialCampaignMessage((InitialCampaignMessage) content);
+				newDay.setInitialCampaignMessage((InitialCampaignMessage) content);
 			} else if (content instanceof CampaignOpportunityMessage) {
 				System.out.println("campaign opp");
 				//TODO: this is throwing a Null exception
 				handleCampaignOpportunityMessage((CampaignOpportunityMessage) content);
+				newDay.setCampaignOpportunityMessage((CampaignOpportunityMessage) content);
 			} else if (content instanceof CampaignReport) {
 				System.out.println("camp report");
 				handleCampaignReport((CampaignReport) content);
+				newDay.setCampaignReport((CampaignReport) content);
 			} else if (content instanceof AdNetworkDailyNotification) {
 				System.out.println("adnet daily notification");
 				handleAdNetworkDailyNotification((AdNetworkDailyNotification) content);
+				newDay.setAdNetworkDailyNotification((AdNetworkDailyNotification) content);
 			} else if (content instanceof AdxPublisherReport) { //may not be used
 				System.out.println("adx pub report");
 				handleAdxPublisherReport((AdxPublisherReport) content);
 			} else if (content instanceof SimulationStatus) {
 				System.out.println("sim status");
 				handleSimulationStatus((SimulationStatus) content);
+				newDay.setSimulationStatus((SimulationStatus) content);
 			} else if (content instanceof PublisherCatalog) { 
 				System.out.println("pub catalogue");
 				handlePublisherCatalog((PublisherCatalog) content);
-			} else if (content instanceof AdNetworkReport) { //maybe not used
+				newDay.setPublisherCatalog((PublisherCatalog) content);
+			} else if (content instanceof AdNetworkReport) {
 				System.out.println("adnet report");
 				handleAdNetworkReport((AdNetworkReport) content);
+				newDay.setAdNetworkReport((AdNetworkReport) content);
 			} else if (content instanceof StartInfo) {
 				System.out.println("start info");
 				handleStartInfo((StartInfo) content);
+				newDay.setStartInfo((StartInfo) content);
 			} else if (content instanceof BankStatus) {
 				System.out.println("bank status");
 				handleBankStatus((BankStatus) content);
@@ -390,12 +398,15 @@ public class BrownAgent extends Agent {
 		++day;
 	}
 	
+	private HashMap<AdNetworkKey, Double> bidPrices;
+	
 	/**
 	 * 
 	 */
 	protected void updateBids() {
 
 		bidBundle = new AdxBidBundle();
+		bidPrices = new HashMap<AdNetworkKey, Double>();
 		int entrySum = 0;
 		
 		/*
@@ -445,6 +456,9 @@ public class BrownAgent extends Agent {
 							++entCount;
 							bidBundle.addQuery(queries[i], rbid, new Ad(null),
 									campaign.id, 1);
+							AdNetworkKey k = CostModel.queryToKey(queries[i]);
+							k.setCampaignId(campaign.id);
+							bidPrices.put(k, rbid);
 						}
 					}
 					
@@ -452,6 +466,9 @@ public class BrownAgent extends Agent {
 						++entCount;
 						bidBundle.addQuery(queries[i], rbid, new Ad(null),
 								campaign.id, 1);
+						AdNetworkKey k = CostModel.queryToKey(queries[i]);
+						k.setCampaignId(campaign.id);
+						bidPrices.put(k, rbid);
 					}
 				}
 				double impressionLimit = 0.5 * campaign.impsTogo();
