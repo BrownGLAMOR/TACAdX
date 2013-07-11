@@ -15,9 +15,5 @@ public abstract class ImpressionsOptimizer extends OptimizationAlg {
 	
 	
 	
-	public AdxBidBundle generateBidBundle(double[][] imps){
-		
-		return null;
-		
-	}
+	public abstract AdxBidBundle getBidBundle(int day);
 }

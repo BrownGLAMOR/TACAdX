@@ -3,9 +3,9 @@ package brown.tac.adx.optimization;
 import java.util.LinkedList;
 
 import tau.tac.adx.props.AdxBidBundle;
-import brown.tac.adx.models.Modeler;
 import brown.tac.adx.models.ModelerAPI;
 import brown.tac.adx.optimization.impressions.greedy.GreedyOptimizer;
+import brown.tac.adx.optimization.impressions.greedy.ImpressionsOptimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
 public class Optimizer {
@@ -25,25 +25,34 @@ public class Optimizer {
 	 */
 	ModelerAPI _modeler;
 	
-
+	ImpressionsOptimizer _impressionsOptimizer;
+	
+	//MAKE THIS NOT SUCK
 	
 	public Optimizer(String filename, ModelerAPI modeler) {
 		_modeler = modeler;
-		_optimizationAlgList = new LinkedList<OptimizationAlg>();
-		_optimizationAlgList.add(new GreedyOptimizer(_modeler));
-		this.parseOptimizationAlgs(filename);
+		_impressionsOptimizer = new GreedyOptimizer(_modeler);
+//		_optimizationAlgList = new LinkedList<OptimizationAlg>();
+//		_optimizationAlgList.add(new GreedyOptimizer(_modeler));
+//		this.parseOptimizationAlgs(filename);
 	}
 
-	public void makeDecisions(DailyPrediction pred) {
-		for (OptimizationAlg alg : _optimizationAlgList) {
-			alg.makeDecision();
-		}
+	public void makeImpressionsDecision(){
+		_impressionsOptimizer.makeDecision();
 	}
+	public AdxBidBundle getBidBundle(int day){
+		return _impressionsOptimizer.getBidBundle(day);
+	}
+//	public void makeDecisions(DailyPrediction pred) {
+//		for (OptimizationAlg alg : _optimizationAlgList) {
+//			alg.makeDecision();
+//		}
+//	}
 	
-	/*
-	 * Parses the XML file filename and fills in the optimizer list
-	 */
-	private void parseOptimizationAlgs(String filename) {
-		
-	}
+//	/*
+//	 * Parses the XML file filename and fills in the optimizer list
+//	 */
+//	private void parseOptimizationAlgs(String filename) {
+//		
+//	}
 }

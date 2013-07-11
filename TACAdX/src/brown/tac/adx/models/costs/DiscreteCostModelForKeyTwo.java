@@ -12,7 +12,12 @@ public class DiscreteCostModelForKeyTwo extends CostModelForKey {
 	public DiscreteCostModelForKeyTwo(){
 	}
 	public double getCostForImpressions(double impressions) {
-		return costMap.get(impressions);
+		if (costMap.containsKey(impressions)){
+			return costMap.get(impressions);
+		}
+		else{
+			return Double.MAX_VALUE;
+		}
 	}
 	
 	private static final Map<Double,Double> costMap;
@@ -23,6 +28,8 @@ public class DiscreteCostModelForKeyTwo extends CostModelForKey {
 		costMap.put(10.0, 15.0);
 		costMap.put(15.0, 20.0);
 		costMap.put(20.0, 25.0);
+		costMap.put(25.0, 30.0);
+		costMap.put(30.0, 35.0);
 	}
 
 }

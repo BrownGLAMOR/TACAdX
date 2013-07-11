@@ -27,7 +27,7 @@ public class DailyInfo {
 	SimulationStatus simulationStatus;
 	
 	
-	
+	double qualityRating;
 	
 	BankStatus bankStatus;
 	
@@ -68,6 +68,10 @@ public class DailyInfo {
 		this.simulationStatus = simulationStatus;
 	}
 	
+	public void setQualityRating(double quality){
+		this.qualityRating = quality;
+	}
+	
 	public StartInfo getStartInfo(){
 		if(_day==0){
 			return startInfo;
@@ -104,5 +108,7 @@ public class DailyInfo {
 	public SimulationStatus getSimulationStatus(){
 		return simulationStatus;
 	}
-	
+	public double getQualityRating(){
+		return this.qualityRating;
+	}
 }

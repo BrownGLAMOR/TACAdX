@@ -18,15 +18,15 @@ import brown.tac.adx.models.costs.DiscreteCostModelForKeyTwo;
 public class DummyModeler implements ModelerAPI {
 	private AdxQuery[] _keys;
 	private Map<Integer, CampaignData> _campaigns;
-	private CostModelForKey[] _costModels = {new DiscreteCostModelForKeyOne(), new DiscreteCostModelForKeyTwo()};
-	public DummyModeler(){
+	private CostModelForKey[] _costModels;
+	private long _maxCampaignImpressions = 12;
+	public DummyModeler(CostModelForKey[] costModels){
+		_costModels = costModels;
 		_keys = new AdxQuery[2];
 		Set<MarketSegment> markSegListOne = new HashSet<MarketSegment>();
-		markSegListOne.add(MarketSegment.FEMALE);
 		markSegListOne.add(MarketSegment.YOUNG);
 		_keys[0] = new AdxQuery("nyt", markSegListOne, Device.mobile, AdType.text);
 		Set<MarketSegment> markSegListTwo = new HashSet<MarketSegment>();
-		markSegListTwo.add(MarketSegment.MALE);
 		markSegListTwo.add(MarketSegment.YOUNG);
 		_keys[1] = new AdxQuery("espn", markSegListTwo, Device.pc, AdType.text);
 		
@@ -34,29 +34,34 @@ public class DummyModeler implements ModelerAPI {
 		Set<MarketSegment> cmpMarkSeg = new HashSet<MarketSegment>();
 		cmpMarkSeg.add(MarketSegment.YOUNG);
 		CampaignData cmp1 = new CampaignData(
-				new InitialCampaignMessage(1, (long) 300, 0, 5, cmpMarkSeg, 1.2, 1.2));
+				new InitialCampaignMessage(1, _maxCampaignImpressions, 0, 5, cmpMarkSeg, 1, 1));
 		_campaigns.put(1, cmp1);
 		
 		CampaignData cmp2 = new CampaignData(
-				new InitialCampaignMessage(2, (long) 400, 0, 5, cmpMarkSeg, 1.3,1.3));
+				new InitialCampaignMessage(2, _maxCampaignImpressions, 0, 5, cmpMarkSeg, 1,1));
 		_campaigns.put(2,cmp2);
 
 	}
 
 	@Override
 	public double getCostForImpressions(String key, double impressions) {
-		if (key==_keys[0].toString()){
-			return _costModels[0].getCostForImpressions(impressions);
+		if (key.equals(_keys[1].toString())){
+			return _costModels[1].getCostForImpressions(impressions);
 		}
 		else{
-			return _costModels[1].getCostForImpressions(impressions);
+			return _costModels[0].getCostForImpressions(impressions);
 		}
 	}
 
 	@Override
 	public double getRevenueForEffectiveImpressions(int campaignID,
 			double effectiveImpressions) {
-		return (5*effectiveImpressions)%300;
+		if (effectiveImpressions<=_maxCampaignImpressions){
+			return 6*effectiveImpressions;
+		}
+		else{
+			return 6*_maxCampaignImpressions;
+		}
 	}
 
 	@Override

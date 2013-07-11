@@ -3,16 +3,18 @@ package brown.tac.adx.models.costs;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
- * Generates and stores random numbers for slope and y-intercept.
- * Uses these as linear model variables to compute cost for impressions.
- */
+
 public class DiscreteCostModelForKeyOne extends CostModelForKey {
 
 	public DiscreteCostModelForKeyOne(){
 	}
 	public double getCostForImpressions(double impressions) {
-		return costMap.get(impressions);
+		if (costMap.containsKey(impressions)){
+			return costMap.get(impressions);
+		}
+		else{
+			return Double.MAX_VALUE;
+		}
 	}
 	
 	private static final Map<Double,Double> costMap;
@@ -23,6 +25,9 @@ public class DiscreteCostModelForKeyOne extends CostModelForKey {
 		costMap.put(10.0, 12.0);
 		costMap.put(15.0, 18.0);
 		costMap.put(20.0, 24.0);
+		costMap.put(25.0, 30.0);
+		costMap.put(30.0, 36.0);
 	}
 
 }
+

@@ -133,7 +133,7 @@ public class BrownAgent extends Agent {
 	 */
 	private int day = 0;
 	
-
+	private double qualityRating = 0;
 
 	private Random randomGenerator;
 
@@ -288,6 +288,7 @@ public class BrownAgent extends Agent {
 		allCampaigns.put(initialCampaignMessage.getId(), campaignData);
 		log.info("Day " + day + ": Campaign opportunity - " + pendingCampaign);
 
+		
 		/*
 		 * The campaign requires com.getReachImps() impressions. The competing
 		 * Ad Networks bid for the total campaign Budget (that is, the ad
@@ -296,39 +297,40 @@ public class BrownAgent extends Agent {
 		 * therefore the total number of impressions may be treated as a reserve
 		 * (upper bound) price for the auction.
 		 */
-		long cmpBid = 1 + Math.abs((randomGenerator.nextLong())
-				% (com.getReachImps()));
+//		long cmpBid = 1 + Math.abs((randomGenerator.nextLong())
+//				% (com.getReachImps()));
+//
+//		double cmpBidUnits = cmpBid / 1000.0;
 
-		double cmpBidUnits = cmpBid / 1000.0;
-
-		log.info("Day " + day + ": Campaign total budget bid: " + cmpBidUnits);
-
-		/*
-		 * Adjust ucs bid s.t. target level is achieved. Note: The bid for the
-		 * user classification service is piggybacked
-		 */
-
-		if (adNetworkDailyNotification != null) {
-			double ucsLevel = adNetworkDailyNotification.getServiceLevel();
-			double prevUcsBid = ucsBid;
-
-			/* UCS Bid should not exceed 0.2 */
-			ucsBid = Math.min(0.1 + 0.1*randomGenerator.nextDouble(), prevUcsBid * (1 + ucsTargetLevel - ucsLevel));
-
-			log.info("Day " + day + ": Adjusting ucs bid: was " + prevUcsBid
-					+ " level reported: " + ucsLevel + " target: "
-					+ ucsTargetLevel + " adjusted: " + ucsBid);
-		} else {
-			log.info("Day " + day + ": Initial ucs bid is " + ucsBid);
-		}
-
-		/* Note: Campaign bid is in millis */
-		AdNetBidMessage bids = new AdNetBidMessage(ucsBid, pendingCampaign.id,
-				cmpBid);
+//		log.info("Day " + day + ": Campaign total budget bid: " + cmpBidUnits);
+//
+//		/*
+//		 * Adjust ucs bid s.t. target level is achieved. Note: The bid for the
+//		 * user classification service is piggybacked
+//		 */
+//
+//		if (adNetworkDailyNotification != null) {
+//			double ucsLevel = adNetworkDailyNotification.getServiceLevel();
+//			double prevUcsBid = ucsBid;
+//
+//			/* UCS Bid should not exceed 0.2 */
+//			ucsBid = Math.min(0.1 + 0.1*randomGenerator.nextDouble(), prevUcsBid * (1 + ucsTargetLevel - ucsLevel));
+//
+//			log.info("Day " + day + ": Adjusting ucs bid: was " + prevUcsBid
+//					+ " level reported: " + ucsLevel + " target: "
+//					+ ucsTargetLevel + " adjusted: " + ucsBid);
+//		} else {
+//			log.info("Day " + day + ": Initial ucs bid is " + ucsBid);
+//		}
+//
+//		/* Note: Campaign bid is in millis */
+//		AdNetBidMessage bids = new AdNetBidMessage(ucsBid, pendingCampaign.id,
+//				cmpBid);
+//		
+//		//Message sent here
+//		//TODO: This message should be sent after the optimizer makes decisions
+//		sendMessage(demandAgentAddress, bids);
 		
-		//Message sent here
-		//TODO: This message should be sent after the optimizer makes decisions
-		sendMessage(demandAgentAddress, bids);
 	}
 
 	/**
@@ -359,7 +361,10 @@ public class BrownAgent extends Agent {
 			campaignAllocatedTo = " WON at cost "
 					+ notificationMessage.getCost();
 		}
-
+		
+		
+		qualityRating = notificationMessage.getQualityScore();
+		_modeler.updateModeler(day, notificationMessage);
 		log.info("Day " + day + ": " + campaignAllocatedTo
 				+ ". UCS Level set to " + notificationMessage.getServiceLevel()
 				+ " at price " + notificationMessage.getPrice()
@@ -377,6 +382,8 @@ public class BrownAgent extends Agent {
 		//AdxBidBundle bidBundle = _optimizer.makeDecisions(prediction);
 		
 		// Make calls to sendMessage to tell the server about our decisions
+		bidBundle = _optimizer.getBidBundle(day);
+		
 		if (bidBundle != null) {
 			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
 			// the AdX server
@@ -384,7 +391,7 @@ public class BrownAgent extends Agent {
 			log.info("Day " + day + ": Sending BidBundle");
 			sendMessage(adxAgentAddress, bidBundle);
 		}
-		
+		_modeler.updateModeler(day, bidBundle);
 		log.info("Day " + day + " ended. Starting next day");
 		++day;
 	}
@@ -479,7 +486,7 @@ public class BrownAgent extends Agent {
 	private void handleCampaignReport(CampaignReport campaignReport) {
 
 		campaignReports.add(campaignReport);
-
+		_modeler.updateModeler(day, campaignReport);
 		/*
 		 * for each campaign, the accumulated statistics from day 1 up to day
 		 * n-1 are reported
