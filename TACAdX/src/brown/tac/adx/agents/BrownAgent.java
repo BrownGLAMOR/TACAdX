@@ -11,6 +11,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+
+
+
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
 import se.sics.tasim.aw.Message;
@@ -89,6 +93,16 @@ public class BrownAgent extends Agent {
 	private CampaignData pendingCampaign;
 
 	/**
+	 * This is the amount we currently are bidding per impression on campaigns
+	 */
+	private double persistantCampaignBid;
+
+	/**
+	 * This is the max amount we are currently willing to spend on the UCS service
+	 */
+	private double ucsMaxBid;
+
+	/**
 	 * We maintain a collection (mapped by the campaign id) of the campaigns won
 	 * by our agent.
 	 */
@@ -112,12 +126,12 @@ public class BrownAgent extends Agent {
 	 * The targeted service level for the user classification service
 	 */
 	double ucsTargetLevel;
-	
+
 	/*
 	 * Container object for models
 	 */
 	ModelerAPI _modeler;
-	
+
 	/*
 	 * Container Object for optimizers
 	 */
@@ -127,13 +141,12 @@ public class BrownAgent extends Agent {
 	 * Data structure to hold the messages received on day d
 	 */
 	LinkedList<DailyInfo> _dailyInfoList;
-	
+
 	/*
 	 * current day of simulation
 	 */
 	private int day = 0;
-	
-	private double qualityRating = 0;
+
 
 	private Random randomGenerator;
 
@@ -147,30 +160,28 @@ public class BrownAgent extends Agent {
 	@Override
 	protected void messageReceived(Message message) {
 		//System.out.println("DAY: "+day);
-		
+
 		//if the dailyinfo list has not been updated, update it. 
 		if (_dailyInfoList.size()== day) {
 			_dailyInfoList.add(day, new DailyInfo(day));
 		}
-		
+
 		try {
-			
+
 			Transportable content = message.getContent();
-			
-			
+
+
 			if(content==null){
 				System.out.println("NULL");
 			}
 			System.out.println(message.getContent().getClass().toString());
-			
-			//TODO: Is there a better way to handle these messages?
+
 			// Ultimately they need to be passed into a DailyInfo Object that 
 			if (content instanceof InitialCampaignMessage) {
 				System.out.println("init campaign");
 				handleInitialCampaignMessage((InitialCampaignMessage) content);
 			} else if (content instanceof CampaignOpportunityMessage) {
 				System.out.println("campaign opp");
-				//TODO: this is throwing a Null exception
 				handleCampaignOpportunityMessage((CampaignOpportunityMessage) content);
 			} else if (content instanceof CampaignReport) {
 				System.out.println("camp report");
@@ -198,7 +209,7 @@ public class BrownAgent extends Agent {
 				handleBankStatus((BankStatus) content);
 			}  else {
 				System.out.println("not classified");
-				
+
 				log.info("UNKNOWN Message Received: " + content);
 			}
 
@@ -249,15 +260,14 @@ public class BrownAgent extends Agent {
 
 		//set initial message
 		initialCampaignMessage = campaignMessage;
-		
+
 		//set agent address information
 		demandAgentAddress = campaignMessage.getDemandAgentAddress();
 		adxAgentAddress = campaignMessage.getAdxAgentAddress();
 
 		//we start with an initial campaign, fill in the details
 		CampaignData campaignData = new CampaignData(initialCampaignMessage);
-		
-		//TODO: check that this is in the spec
+
 		campaignData.setBudget(initialCampaignMessage.getReachImps() / 1000.0);
 
 		/*
@@ -267,7 +277,7 @@ public class BrownAgent extends Agent {
 		log.info("Day " + day + ": Allocated campaign - " + campaignData);
 		myCampaigns.put(initialCampaignMessage.getId(), campaignData);
 		allCampaigns.put(initialCampaignMessage.getId(), campaignData);
-		
+
 		//here we should add myCampaigns to the daily info 
 	}
 
@@ -282,13 +292,19 @@ public class BrownAgent extends Agent {
 
 		day = com.getDay();
 
+
 		pendingCampaign = new CampaignData(com);
 		CampaignData campaignData = new CampaignData(com);
-		
+
 		allCampaigns.put(initialCampaignMessage.getId(), campaignData);
 		log.info("Day " + day + ": Campaign opportunity - " + pendingCampaign);
 
-		
+
+		day = com.getDay();
+
+		pendingCampaign = new CampaignData(com);
+		//log.info("Day " + day + ": Campaign opportunity - " + pendingCampaign);
+
 		/*
 		 * The campaign requires com.getReachImps() impressions. The competing
 		 * Ad Networks bid for the total campaign Budget (that is, the ad
@@ -297,40 +313,34 @@ public class BrownAgent extends Agent {
 		 * therefore the total number of impressions may be treated as a reserve
 		 * (upper bound) price for the auction.
 		 */
-//		long cmpBid = 1 + Math.abs((randomGenerator.nextLong())
-//				% (com.getReachImps()));
-//
-//		double cmpBidUnits = cmpBid / 1000.0;
 
-//		log.info("Day " + day + ": Campaign total budget bid: " + cmpBidUnits);
-//
-//		/*
-//		 * Adjust ucs bid s.t. target level is achieved. Note: The bid for the
-//		 * user classification service is piggybacked
-//		 */
-//
-//		if (adNetworkDailyNotification != null) {
-//			double ucsLevel = adNetworkDailyNotification.getServiceLevel();
-//			double prevUcsBid = ucsBid;
-//
-//			/* UCS Bid should not exceed 0.2 */
-//			ucsBid = Math.min(0.1 + 0.1*randomGenerator.nextDouble(), prevUcsBid * (1 + ucsTargetLevel - ucsLevel));
-//
-//			log.info("Day " + day + ": Adjusting ucs bid: was " + prevUcsBid
-//					+ " level reported: " + ucsLevel + " target: "
-//					+ ucsTargetLevel + " adjusted: " + ucsBid);
-//		} else {
-//			log.info("Day " + day + ": Initial ucs bid is " + ucsBid);
-//		}
-//
-//		/* Note: Campaign bid is in millis */
-//		AdNetBidMessage bids = new AdNetBidMessage(ucsBid, pendingCampaign.id,
-//				cmpBid);
-//		
-//		//Message sent here
-//		//TODO: This message should be sent after the optimizer makes decisions
-//		sendMessage(demandAgentAddress, bids);
-		
+
+		//the campaign auction bid
+
+
+		double _ucsBid = getUCSBid();
+		updatePersistantCampaignBid();
+
+		long cmpBid = (long) (persistantCampaignBid * pendingCampaign.reachImps);
+
+
+		/*
+		 * Adjust ucs bid s.t. target level is achieved. Note: The bid for the
+		 * user classification service is piggybacked
+		 */
+
+
+		/*
+		 * A bid of zero is ignored: we have to bid at least 1
+		 */
+		cmpBid = Math.max(1, cmpBid);
+
+		/* Note: Campaign bid is in millis */
+		AdNetBidMessage bids = new AdNetBidMessage(_ucsBid, pendingCampaign.id,
+				cmpBid);
+		sendMessage(demandAgentAddress, bids);
+
+
 	}
 
 	/**
@@ -360,10 +370,14 @@ public class BrownAgent extends Agent {
 
 			campaignAllocatedTo = " WON at cost "
 					+ notificationMessage.getCost();
+		} 
+		
+		//TODO: move this into a modeler
+		else {
+			persistantCampaignBid = persistantCampaignBid * 0.8;
 		}
-		
-		
-		qualityRating = notificationMessage.getQualityScore();
+
+
 		_modeler.updateModeler(day, notificationMessage);
 		log.info("Day " + day + ": " + campaignAllocatedTo
 				+ ". UCS Level set to " + notificationMessage.getServiceLevel()
@@ -380,105 +394,107 @@ public class BrownAgent extends Agent {
 		//removed following lines until implemented... (betsy)
 		//DailyPrediction prediction = _modeler.updateModels(new DailyPrediction(_dailyInfoList.get(day)));
 		//AdxBidBundle bidBundle = _optimizer.makeDecisions(prediction);
-		
+
 		// Make calls to sendMessage to tell the server about our decisions
 		bidBundle = _optimizer.getBidBundle(day);
-		
+
 		if (bidBundle != null) {
 			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
 			// the AdX server
-			//TODO: We should call this after the optimizer makes decisions
 			log.info("Day " + day + ": Sending BidBundle");
 			sendMessage(adxAgentAddress, bidBundle);
+		} else {
+			bidBundle = defaultBidBundle();
+			sendMessage(adxAgentAddress, bidBundle);
 		}
+
 		_modeler.updateModeler(day, bidBundle);
 		log.info("Day " + day + " ended. Starting next day");
 		++day;
 	}
-	
+
 	/**
 	 * 
 	 */
-	protected void updateBids() {
-
-		bidBundle = new AdxBidBundle();
-		int entrySum = 0;
-		
-		/*
-		 * 
-		 */
-		for (CampaignData campaign : myCampaigns.values()) {
-
-			int dayBiddingFor = day + 1;
-
-			/* A fixed random bid, for all queries of the campaign */
-			/*
-			 * Note: bidding per 1000 imps (CPM) - no more than average budget
-			 * revenue per imp
-			 */
-
-			Random rnd = new Random();
-			double avgCmpRevenuePerImp = campaign.budget / campaign.reachImps;
-			double rbid = 1000.0 * rnd.nextDouble() * avgCmpRevenuePerImp;
-
-			/*
-			 * add bid entries w.r.t. each active campaign with remaining
-			 * contracted impressions.
-			 * 
-			 * for now, a single entry per active campaign is added for queries
-			 * of matching target segment.
-			 */
-
-			if ((dayBiddingFor >= campaign.dayStart)
-					&& (dayBiddingFor <= campaign.dayEnd)
-					&& (campaign.impsTogo() >= 0)) {
-
-				int entCount = 0;
-				for (int i = 0; i < queries.length; i++) {
-
-					Set<MarketSegment> segmentsList = queries[i]
-							.getMarketSegments();
-
-					for (MarketSegment marketSegment : segmentsList) {
-						if (campaign.targetSegments.contains( marketSegment)) {
-							/*
-							 * among matching entries with the same campaign id,
-							 * the AdX randomly chooses an entry according to
-							 * the designated weight. by setting a constant
-							 * weight 1, we create a uniform probability over
-							 * active campaigns
-							 */
-							++entCount;
-							bidBundle.addQuery(queries[i], rbid, new Ad(null),
-									campaign.id, 1);
-						}
-					}
-					
-					if (segmentsList.size() == 0) {
-						++entCount;
-						bidBundle.addQuery(queries[i], rbid, new Ad(null),
-								campaign.id, 1);
-					}
-				}
-				double impressionLimit = 0.5 * campaign.impsTogo();
-				double budgetLimit = 0.5 * Math.max(0, campaign.budget
-						- campaign.stats.getCost());
-				bidBundle.setCampaignDailyLimit(campaign.id,
-						(int) impressionLimit, budgetLimit);
-				entrySum += entCount;
-				log.info("Day " + day + ": Updated " + entCount
-						+ " Bid Bundle entries for Campaign id " + campaign.id);
-			}
-		}
-
-		if (bidBundle != null) {
-			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
-			// the AdX server
-			//TODO: We should call this after the optimizer makes decisions
-			log.info("Day " + day + ": Sending BidBundle");
-			sendMessage(adxAgentAddress, bidBundle);
-		}
-	}
+	//	protected void updateBids() {
+	//
+	//		bidBundle = new AdxBidBundle();
+	//		int entrySum = 0;
+	//		
+	//		/*
+	//		 * 
+	//		 */
+	//		for (CampaignData campaign : myCampaigns.values()) {
+	//
+	//			int dayBiddingFor = day + 1;
+	//
+	//			/* A fixed random bid, for all queries of the campaign */
+	//			/*
+	//			 * Note: bidding per 1000 imps (CPM) - no more than average budget
+	//			 * revenue per imp
+	//			 */
+	//
+	//			Random rnd = new Random();
+	//			double avgCmpRevenuePerImp = campaign.budget / campaign.reachImps;
+	//			double rbid = 1000.0 * rnd.nextDouble() * avgCmpRevenuePerImp;
+	//
+	//			/*
+	//			 * add bid entries w.r.t. each active campaign with remaining
+	//			 * contracted impressions.
+	//			 * 
+	//			 * for now, a single entry per active campaign is added for queries
+	//			 * of matching target segment.
+	//			 */
+	//
+	//			if ((dayBiddingFor >= campaign.dayStart)
+	//					&& (dayBiddingFor <= campaign.dayEnd)
+	//					&& (campaign.impsTogo() >= 0)) {
+	//
+	//				int entCount = 0;
+	//				for (int i = 0; i < queries.length; i++) {
+	//
+	//					Set<MarketSegment> segmentsList = queries[i]
+	//							.getMarketSegments();
+	//
+	//					for (MarketSegment marketSegment : segmentsList) {
+	//						if (campaign.targetSegments.contains( marketSegment)) {
+	//							/*
+	//							 * among matching entries with the same campaign id,
+	//							 * the AdX randomly chooses an entry according to
+	//							 * the designated weight. by setting a constant
+	//							 * weight 1, we create a uniform probability over
+	//							 * active campaigns
+	//							 */
+	//							++entCount;
+	//							bidBundle.addQuery(queries[i], rbid, new Ad(null),
+	//									campaign.id, 1);
+	//						}
+	//					}
+	//					
+	//					if (segmentsList.size() == 0) {
+	//						++entCount;
+	//						bidBundle.addQuery(queries[i], rbid, new Ad(null),
+	//								campaign.id, 1);
+	//					}
+	//				}
+	//				double impressionLimit = 0.5 * campaign.impsTogo();
+	//				double budgetLimit = 0.5 * Math.max(0, campaign.budget
+	//						- campaign.stats.getCost());
+	//				bidBundle.setCampaignDailyLimit(campaign.id,
+	//						(int) impressionLimit, budgetLimit);
+	//				entrySum += entCount;
+	//				log.info("Day " + day + ": Updated " + entCount
+	//						+ " Bid Bundle entries for Campaign id " + campaign.id);
+	//			}
+	//		}
+	//
+	//		if (bidBundle != null) {
+	//			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
+	//			// the AdX server
+	//			log.info("Day " + day + ": Sending BidBundle");
+	//			sendMessage(adxAgentAddress, bidBundle);
+	//		}
+	//	}
 
 	/**
 	 * Campaigns performance w.r.t. each allocated campaign
@@ -503,6 +519,152 @@ public class BrownAgent extends Agent {
 					+ cstats.getCost());
 		}
 	}
+	/**
+	 * Updates the persistantCampaignBid
+	 */
+	private void updatePersistantCampaignBid(){
+		for (CampaignData campaign : myCampaigns.values()) {
+
+			//UPDATE: baseBid now reflects the urgency score of each campaign, i.e. impression-to-go-percentage/days-left-percentage
+			double urgency = campaign.getUrgency(day);
+			
+			//TODO: update this
+			if (urgency > 1.0) {
+				persistantCampaignBid = persistantCampaignBid * (1.0 + 0.1 * urgency);
+			}
+		}
+	}
+	
+	/**
+	 * Generates a default bid bundle for impressions in case the optimizer is too slow
+	 */
+	private AdxBidBundle defaultBidBundle(){
+		
+		AdxBidBundle defaultBundle = new AdxBidBundle();
+		
+		for (CampaignData campaign : myCampaigns.values()) {
+
+			int dayBiddingFor = day + 1;
+
+			/* 
+			 * 
+			 * Makes a reasonable (hence the name) bid for each campaign:
+			 * the campaign budget divided by the number of impressions
+			 * that have to be bought with that budget
+			 * 
+			 * 
+			 */
+
+
+
+			if (campaign.dayEnd - day > 0) {
+
+				double urgency = campaign.getUrgency(day);
+				double baseBid = campaign.budget / campaign.reachImps * urgency * urgency;
+
+				/*
+				 * add bid entries w.r.t. each active campaign with remaining
+				 * contracted impressions.
+				 * 
+				 * for now, a single entry per active campaign is added for queries
+				 * of matching target segment.
+				 */
+
+				if ((dayBiddingFor >= campaign.dayStart)
+						&& (dayBiddingFor <= campaign.dayEnd)
+						&& (campaign.impsTogo() >= 0)) {
+
+					int entCount = 0;
+					//for each possible key (aka query, aka MarketSegment)...
+					for (int i = 0; i < queries.length; i++) {
+
+						/*
+						 * Adjusts the bids according to video and mobile preferences
+						 * of the campaign
+						 */
+						double rbid = baseBid;
+						if (queries[i].getAdType().equals(AdType.video))
+							rbid = rbid * campaign.videoCoef;
+						if (queries[i].getDevice().equals(Device.mobile))
+							rbid = rbid * campaign.mobileCoef;
+
+						Set<MarketSegment> segmentsList = queries[i]
+								.getMarketSegments();
+
+						/*
+						 * I think that these came from the sets of 1 called 'singleMarketSegment'
+						 * so when it says for each marketSegment in segmentsList, it's really just
+						 * for THE marketSegment in segmentsList
+						 */
+
+						for (MarketSegment marketSegment : segmentsList) {
+							if (campaign.targetSegments.contains( marketSegment)) {
+								/*
+								 * among matching entries with the same campaign id,
+								 * the AdX randomly chooses an entry according to
+								 * the designated weight. by setting a constant
+								 * weight 1, we create a uniform probability over
+								 * active campaigns
+								 */
+								++entCount;
+								defaultBundle.addQuery(queries[i], rbid, new Ad(null),
+										campaign.id, 1);
+							} 
+						}
+
+						/*
+						 * bidding on the neutral campaigns (that ucs got nothing for)
+						 */
+
+						if (segmentsList.size() == 0) {
+							++entCount;
+							defaultBundle.addQuery(queries[i], (rbid*campaign.targetSegments.size()/queries.length), new Ad(null),
+									campaign.id, 1);
+						}
+					}
+
+
+
+
+
+					double impressionLimit = 0.5 * campaign.impsTogo();
+					double budgetLimit = 0.5 * Math.max(0, campaign.budget
+							- campaign.stats.getCost());
+					bidBundle.setCampaignDailyLimit(campaign.id,
+							(int) impressionLimit, budgetLimit);
+				}
+			}
+		}
+
+
+		return defaultBundle;
+	}
+
+	/**
+	 * Updates the bid that the agent should place for the UCS service
+	 */
+	private double getUCSBid(){
+		
+		double ucsMaxBid = 0.0;
+
+		for (CampaignData campaign : myCampaigns.values()) { 
+			if ((campaign.dayEnd - day) >= 0)
+				ucsMaxBid = ucsMaxBid + campaign.budget/(campaign.dayEnd - campaign.dayStart);
+		}
+
+		
+		if (adNetworkDailyNotification != null) {
+			double ucsLevel = adNetworkDailyNotification.getServiceLevel();
+			double prevUcsBid = ucsBid;
+
+			ucsBid = Math.min(prevUcsBid * (1 + ucsTargetLevel - ucsLevel), ucsMaxBid);
+
+			/*log.info("Day " + day + ": Adjusting ucs bid: was " + prevUcsBid
+					+ " level reported: " + ucsLevel + " target: "
+					+ ucsTargetLevel + " adjusted: " + ucsBid); */
+		} 
+		return ucsBid;
+	}
 
 	/**
 	 * Users and Publishers statistics: popularity and ad type orientation
@@ -513,9 +675,9 @@ public class BrownAgent extends Agent {
 			AdxPublisherReportEntry entry = adxPublisherReport
 					.getEntry(publisherKey);
 			log.info(entry.toString());
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -523,20 +685,20 @@ public class BrownAgent extends Agent {
 	 * @param AdNetworkReport
 	 */
 	private void handleAdNetworkReport(AdNetworkReport adnetReport) {
-		
+
 		log.info("Day "+ day + " : AdNetworkReport");
-		
-		
-//		 for (AdNetworkKey adnetKey : adnetReport.keys()) {
-//			double rnd = Math.random();
-//			if (rnd > 0.95) {
-//				AdNetworkReportEntry entry = adnetReport
-//						.getAdNetworkReportEntry(adnetKey);
-//				
-//				log.info(adnetKey + " " + entry);
-//			}
-//		}
-        
+
+
+		//		 for (AdNetworkKey adnetKey : adnetReport.keys()) {
+		//			double rnd = Math.random();
+		//			if (rnd > 0.95) {
+		//				AdNetworkReportEntry entry = adnetReport
+		//						.getAdNetworkReportEntry(adnetKey);
+		//				
+		//				log.info(adnetKey + " " + entry);
+		//			}
+		//		}
+
 	}
 	//Why did the TAu agent override this? DO we need to? Or should we not touch it?
 	@Override
@@ -545,10 +707,10 @@ public class BrownAgent extends Agent {
 		day = 0;
 		bidBundle = new AdxBidBundle();
 		ucsTargetLevel = 0.5 + (randomGenerator.nextInt(5) + 1) / 10.0;
-		
+
 		/* initial bid between 0.1 and 0.2 */
 		ucsBid = 0.1 + 0.1*randomGenerator.nextDouble();
-		
+
 		myCampaigns = new HashMap<Integer, CampaignData>();
 		log.fine("AdNet " + getName() + " simulationSetup");
 	}
@@ -599,7 +761,7 @@ public class BrownAgent extends Agent {
 							singleMarketSegment, Device.pc, AdType.video));
 
 				}
-				
+
 				/**
 				 * An empty segments set is used to indicate the "UNKNOWN" segment
 				 * such queries are matched when the UCS fails to recover the user's
@@ -621,7 +783,7 @@ public class BrownAgent extends Agent {
 		}
 	}
 
-	
+
 
 
 }

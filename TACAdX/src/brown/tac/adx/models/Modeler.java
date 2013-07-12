@@ -13,7 +13,10 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Node; 
 import org.w3c.dom.Element; 
 
+import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
+import tau.tac.adx.report.demand.AdNetworkDailyNotification;
+import tau.tac.adx.report.demand.CampaignReport;
 
 import java.io.File; 
 
@@ -114,6 +117,32 @@ public class Modeler implements ModelerAPI {
 	public Map<Integer, CampaignData> getCampaignMap() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public double getRevenueForEffectiveImpressions(int campaignID,
+			double effectiveImpressions) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void updateModeler(int day, AdxBidBundle bidBundle) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateModeler(int day,
+			AdNetworkDailyNotification adNetDailyNotification) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateModeler(int day, CampaignReport campaignReport) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

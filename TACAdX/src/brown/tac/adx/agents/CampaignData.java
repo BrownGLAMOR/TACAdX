@@ -49,6 +49,10 @@ public class CampaignData {
 	public double effectiveImps(){
 		return stats.getTargetedImps();
 	}
+	
+	public double getUrgency(int day){
+		return (double) impsTogo() / (double) reachImps * (double) (dayEnd - dayStart) / (double) (dayEnd - day);
+	}
 
 	public CampaignData(CampaignOpportunityMessage com) {
 		dayStart = com.getDayStart();
