@@ -35,6 +35,8 @@ public class CostModel extends Model implements ModelerInterface{
 	private HashSet<AdxQuery> modelKeys;
 	private HashMap<Integer, Integer> entryCount;
 	private HashMap<Integer, Integer> bidCount;
+	//	Running average of costPerWin
+	private HashMap<Integer, Double> avgCostPerWin;
 
 	//	Main function for testing
 	public static void main(String[] args){
@@ -82,6 +84,7 @@ public class CostModel extends Model implements ModelerInterface{
 		modelKeys = new HashSet<AdxQuery>();
 		entryCount = new HashMap<Integer, Integer>();
 		bidCount = new HashMap<Integer, Integer>();
+		avgCostPerWin = new HashMap<Integer, Double>();
 		//	Initialize our R database stand-in with relevant fields.
 		re.eval("costmodel = data.frame(gender = character(0), age = character(0), income = character(0), " +
 				"publisher = character(0), adtype = character(0), devicetype = character(0), " +
@@ -116,8 +119,11 @@ public class CostModel extends Model implements ModelerInterface{
 		int hash = q.hashCode();
 		//re.eval("entrycount_" + hash + " = " + "entrycount_" + hash + " + 1");
 		//re.eval("totalbids_" + hash + " = " + "totalbids_" + hash + " + " + bids);
-		entryCount.put(hash, entryCount.get(hash) + 1);
+		int entries = entryCount.get(hash);
+		entryCount.put(hash, entries + 1);
 		bidCount.put(hash, bidCount.get(hash) + bids);
+		double newcpw = ((avgCostPerWin.get(hash) * entries) + costPerWin)/(entries + 1);
+		avgCostPerWin.put(hash, newcpw);
 		
 		re.eval("costmodel[" + nextEntry + ",] = c(\"" + gender + "\",\"" + age + "\",\"" + income
 				+ "\",\"" + publisher + "\",\"" + adType + "\",\"" + deviceType + "\"," + day + ','
@@ -161,6 +167,7 @@ public class CostModel extends Model implements ModelerInterface{
 		//re.eval("totalbids_" + q.hashCode() + " = 0");
 		entryCount.put(q.hashCode(), 0);
 		bidCount.put(q.hashCode(), 0);
+		avgCostPerWin.put(q.hashCode(), 0.0);
 	}
 
 	private void updateRegression(AdxQuery q){
@@ -172,11 +179,7 @@ public class CostModel extends Model implements ModelerInterface{
 		String y1 = "winrate";
 		String y2 = "costperwin";
 		String x = "bidprice";
-		String hash = "" + q.hashCode();
-		//	R will interpret a '-' character as minus, not as part of a name - thus FAIL.
-		if(q.hashCode() < 0){
-			hash = "a" + (-1 * q.hashCode());
-		}
+		String hash = formatHash(q);
 		String name1 = "model_" + x + "_" + y1 + "_" + hash;
 		String name2 = "model_" + y2 + "_" + x + "_" + hash;
 		System.out.println("CREATING: " + name1 +", " + name2);
@@ -227,7 +230,7 @@ public class CostModel extends Model implements ModelerInterface{
 	@Override
 	public double getBidForImpressions(AdxQuery key, double impressions){
 		int totalBids = bidCount.get(key.hashCode());
-		String modelName = "model_bidprice_winrate_" + key.hashCode();
+		String modelName = "model_bidprice_winrate_" + formatHash(key);
 		double wr = impressions/(double) totalBids;
 		REXP prediction = re.eval("predict(" + modelName + ", data.frame(winrate = " + wr + "))");
 		double rv = prediction.asDouble();
@@ -243,13 +246,21 @@ public class CostModel extends Model implements ModelerInterface{
 
 	@Override
 	public double getCostForImpressions(AdxQuery key, double impressions){
+		double avg = avgCostPerWin.get(key.hashCode());
 		double bp = getBidForImpressions(key, impressions);
-		String modelName = "model_costperwin_bidprice_" + key.hashCode();
-		REXP prediction = re.eval("predict(" + modelName + ", data.frame(bidprice = " + bp + ")");
+		String modelName = "model_costperwin_bidprice_" + formatHash(key);
+		REXP prediction = re.eval("predict(" + modelName + ", data.frame(bidprice = " + bp + "))");
 		double rv = prediction.asDouble();
 		System.out.println("RV: " + rv);
+		rv *= impressions;
+		if(rv > avg * 1.5){
+			rv = avg * 1.5;
+		}
+		else if(rv < avg * .5){
+			rv = avg * .5;
+		}
 		try{
-			return rv * impressions;
+			return rv;
 		}
 		catch(Exception e){
 			//	TODO: WHAT DO IF FAIL?!?!?!?
@@ -262,6 +273,16 @@ public class CostModel extends Model implements ModelerInterface{
 			double effectiveImpressions) {
 		// Dummy? CostModel doesn't need this...
 		return 0;
+	}
+	
+	//	Return query hash as a String
+	private String formatHash(AdxQuery q){
+		String hash = "" + q.hashCode();
+		//	R will interpret a '-' character as minus, not as part of a name - thus FAIL.
+		if(q.hashCode() < 0){
+			hash = "a" + (-1 * q.hashCode());
+		}
+		return hash;
 	}
 
 	public void closeR(){
