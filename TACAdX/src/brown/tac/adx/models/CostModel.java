@@ -22,13 +22,14 @@ import tau.tac.adx.users.properties.Age;
 import tau.tac.adx.users.properties.Gender;
 import tau.tac.adx.users.properties.Income;
 import brown.tac.adx.agents.DailyInfo;
+import brown.tac.adx.optimizationalgs.Optimizer;
 import brown.tac.adx.predictions.DailyPrediction;
 
 /**
  * A Modeler class that manages and encompasses each of the PredictionModel objects that
  * the agent will use for prediction.
  */
-public class CostModel extends Model implements ModelerInterface{
+public class CostModel /*extends Model*/ implements ModelerInterface{
 	//	Stores all initialized models
 	Rengine re;
 	int nextEntry = 1;
@@ -37,6 +38,13 @@ public class CostModel extends Model implements ModelerInterface{
 	private HashMap<Integer, Integer> bidCount;
 	//	Running average of costPerWin
 	private HashMap<Integer, Double> avgCostPerWin;
+	private HashMap<AdNetworkKey, Double> bidPrices;
+	private AdNetworkReport adNetReport;
+	
+	
+	private Optimizer optimizer;
+	//	If DailyInfo is gone, then we need an internal measure of what day it is.
+	private int day = 0;
 
 	//	Main function for testing
 	public static void main(String[] args){
@@ -93,6 +101,14 @@ public class CostModel extends Model implements ModelerInterface{
 				"hash = integer(0), stringsAsFactors = FALSE)");
 
 	}
+	
+	/**
+	 *  Sets the optimizer to signal when we have the regression data!
+	 * @param the Optimizer to set
+	 */
+	public void setOptimizer(Optimizer o){
+		optimizer = o;
+	}
 
 	/**
 	 * Takes in an AdNetworkKey and relevant information to produce an entry in the R database.
@@ -132,15 +148,28 @@ public class CostModel extends Model implements ModelerInterface{
 		System.out.println("Added row: " + nextEntry);
 		nextEntry++;
 	}
+	
+	public void updateBids(HashMap<AdNetworkKey, Double> bidPrices){
+		this.bidPrices = bidPrices;
+		if(adNetReport != null)
+			update();
+	}
+	
+	public void updateReport(AdNetworkReport adNetReport){
+		this.adNetReport = adNetReport;
+		if(bidPrices != null)
+			update();
+	}
 
 	/* Modifies and returns the DailyPrediction object */
-	public void update(DailyPrediction pred) {
+	public void update(/*DailyPrediction pred*/) {
 		//		Fetch and add point data, perform regression on current data set.
-		DailyInfo di = pred.getDailyInfo();
-		int curDay = di.getDay();
-		HashMap<AdNetworkKey, Double> bidPrices = di.getDailyBids();
-		AdNetworkReport rep = di.getAdNetworkReport();
-		Set<AdNetworkKey> keys = rep.keys();
+		//	DailyInfo di = pred.getDailyInfo();
+		day++;
+		//	int curDay = day;
+		//	HashMap<AdNetworkKey, Double> bidPrices = di.getDailyBids();
+		//	AdNetworkReport rep = di.getAdNetworkReport();
+		Set<AdNetworkKey> keys = adNetReport.keys();
 		for(AdNetworkKey k : keys){
 			//	Don't need to worry about campaignId because AdxQuery doesn't have a field for it.
 			AdxQuery q = CostModel.keyToQuery(k);
@@ -148,17 +177,21 @@ public class CostModel extends Model implements ModelerInterface{
 				modelKeys.add(q);
 				newRegression(q);
 			}
-			AdNetworkReportEntry temp = rep.getEntry(k);
+			AdNetworkReportEntry temp = adNetReport.getEntry(k);
 			double bidPrice = bidPrices.get(k);
 			int bids = temp.getBidCount();
 			int wins = temp.getWinCount();
 			double cost = temp.getCost();
-			addToR(q, curDay, bids, wins, cost, bidPrice);
+			addToR(q, day, bids, wins, cost, bidPrice);
 		}
 		for(AdxQuery q : modelKeys){
 			//	Updates the regression expression for each model
 			updateRegression(q);
 		}
+		//	TODO: Whatever function in Optimizer needs to be called, call it!
+		//	optimizer.trigger();
+		bidPrices = null;
+		adNetReport = null;
 	}
 	
 	//	Sets up a new regression, just 2 variables...
@@ -183,15 +216,18 @@ public class CostModel extends Model implements ModelerInterface{
 		String name1 = "model_" + x + "_" + y1 + "_" + hash;
 		String name2 = "model_" + y2 + "_" + x + "_" + hash;
 		System.out.println("CREATING: " + name1 +", " + name2);
-		re.eval(name1 + " = lm(as.numeric(" + x + ")~as.numeric(" + y1 + "), data = cursubset)");
+		long tt = System.currentTimeMillis();
+		re.eval(name1 + " = lm(as.numeric(" + x + ")~as.numeric(" + y1 +
+				"), data = cursubset)");//family=binomial(logit), 
 		re.eval(name2 + " = lm(as.numeric(" + y2 + ")~as.numeric(" + x + "), data = cursubset)");
+		System.out.println(System.currentTimeMillis() - tt);
 		
 		//	How to get coefficients... needed?
-		REXP res = re.eval("coefficients(" + name1 + ")");
+		/*REXP res = re.eval("coefficients(" + name1 + ")");
 		double[] coef = res.asDoubleArray();
 		//String[] names = nms.asStringArray();
 		for(int it = 0; it < coef.length; it++)
-			System.out.println(coef[it]);
+			System.out.println(coef[it]);*/
 	}
 
 	public void printDataBase(){
@@ -260,11 +296,12 @@ public class CostModel extends Model implements ModelerInterface{
 			rv = avg * .5;
 		}
 		try{
+			if(entryCount.get(key) < 3)
+				throw new Exception();
 			return rv;
 		}
 		catch(Exception e){
-			//	TODO: WHAT DO IF FAIL?!?!?!?
-			return -1;
+			return avg;
 		}
 	}
 
