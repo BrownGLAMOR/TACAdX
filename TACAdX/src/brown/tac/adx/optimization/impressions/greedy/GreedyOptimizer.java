@@ -112,9 +112,12 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 						if (currCampaign.isFeasibleToAllocate(keys[k].getMarketSegments())) {
 							double impressionSubIncrement = effectiveImpressionSubIncrement /
 									currCampaign.effectiveImpressionsMultiplier(currKey.getAdType(), currKey.getDevice());
-							double subIncrementCost = 
-									_modeler.getCostForImpressions(currKey.toString(),y_k[k]+impressionSubIncrement+potentialIncrement_kc[k][c])-
-									_modeler.getCostForImpressions(currKey.toString(), y_k[k] + potentialIncrement_kc[k][c]);
+							double minuend = _modeler.getCostForImpressions(currKey.toString(),y_k[k]+impressionSubIncrement+potentialIncrement_kc[k][c]);
+							double subtrahend = 0;
+							if (y_k[k] > 0 || potentialIncrement_kc[k][c] > 0){  //to ensure that y-intercept of cost model is accounted for
+								subtrahend = _modeler.getCostForImpressions(currKey.toString(), y_k[k] + potentialIncrement_kc[k][c]);
+							}
+							double subIncrementCost = minuend - subtrahend;
 							System.out.println("Key -> "+k+"... subIncCost -> "+subIncrementCost);
 							if (subIncrementCost < cheapestSubIncrementCost) {
 								cheapestSubIncrementKey = k;

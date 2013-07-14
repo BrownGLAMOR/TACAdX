@@ -34,8 +34,8 @@ public class GreedyOptimizerLinearTest {
 	@Test
 	public void linearTest1(){
 		_costModels = new CostModelForKey[2];
-		_costModels[0] = new SimpleLinearCostModel(3.0, 30000.0);
-		_costModels[1] = new SimpleLinearCostModel(5.0, 0.0);
+		_costModels[0] = new SimpleLinearCostModel(4.0, 10.0);
+		_costModels[1] = new SimpleLinearCostModel(6.0, 0.0);
 		_modeler = new DummyModeler(_costModels);
 		_optimizer = new GreedyOptimizer(_modeler);
 		_keys = _modeler.getKeys();

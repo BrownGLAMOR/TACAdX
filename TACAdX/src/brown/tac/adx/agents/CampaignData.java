@@ -46,6 +46,10 @@ public class CampaignData {
 		return id;
 	}
 	
+	public double getBudget(){
+		return budget;
+	}
+	
 	public double effectiveImps(){
 		return stats.getTargetedImps();
 	}
