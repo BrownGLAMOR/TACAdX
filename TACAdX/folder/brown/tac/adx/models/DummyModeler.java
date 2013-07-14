@@ -7,11 +7,8 @@ import java.util.Set;
 
 import tau.tac.adx.ads.properties.AdType;
 import tau.tac.adx.devices.Device;
-import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
 import tau.tac.adx.report.adn.MarketSegment;
-import tau.tac.adx.report.demand.AdNetworkDailyNotification;
-import tau.tac.adx.report.demand.CampaignReport;
 import tau.tac.adx.report.demand.InitialCampaignMessage;
 import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.costs.CostModelForKey;
@@ -79,25 +76,6 @@ public class DummyModeler implements ModelerAPI {
 
 	public Map<Integer, CampaignData> getCampaignMap() {
 		return _campaigns;
-	}
-
-	@Override
-	public void updateModeler(int day, AdxBidBundle bidBundle) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void updateModeler(int day,
-			AdNetworkDailyNotification adNetDailyNotification) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void updateModeler(int day, CampaignReport campaignReport) {
-		// TODO Auto-generated method stub
-		
 	}
 	
 }

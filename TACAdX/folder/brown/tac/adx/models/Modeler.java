@@ -94,6 +94,7 @@ public class Modeler implements ModelerAPI {
 		return 0;
 	}
 
+	@Override
 	public double getRevenueForEffectiveImpressions(String campaignID,
 			double effectiveImpressions) {
 		// TODO Auto-generated method stub
@@ -107,7 +108,7 @@ public class Modeler implements ModelerAPI {
 	}
 
 	@Override
-	public AdxQuery[] getKeys() {
+	public List<AdxQuery> getKeys() {
 		// TODO Auto-generated method stub
 		return null;
 	}
