@@ -46,19 +46,12 @@ public class CampaignData {
 		return id;
 	}
 	
-	public double getBudget(){
-		return budget;
-	}
-	
 	public double effectiveImps(){
 		return stats.getTargetedImps();
 	}
 	
 	public double getUrgency(int day){
-		if (day < dayEnd)
-			return (double) impsTogo() / (double) reachImps * (double) (dayEnd - dayStart) / (double) (dayEnd - day);
-		else
-			return 0;			
+		return (double) impsTogo() / (double) reachImps * (double) (dayEnd - dayStart) / (double) (dayEnd - day);
 	}
 
 	public CampaignData(CampaignOpportunityMessage com) {

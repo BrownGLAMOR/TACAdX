@@ -2,8 +2,6 @@ package brown.tac.adx.optimization;
 
 import java.util.Map;
 
-import brown.tac.adx.agents.CampaignData;
-
 import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
 
