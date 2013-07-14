@@ -18,12 +18,11 @@ import tau.tac.adx.report.adn.AdNetworkKey;
 import tau.tac.adx.report.adn.AdNetworkReport;
 import tau.tac.adx.report.adn.AdNetworkReportEntry;
 import tau.tac.adx.report.adn.MarketSegment;
+import tau.tac.adx.report.demand.CampaignReport;
 import tau.tac.adx.users.properties.Age;
 import tau.tac.adx.users.properties.Gender;
 import tau.tac.adx.users.properties.Income;
-import brown.tac.adx.agents.DailyInfo;
 import brown.tac.adx.optimizationalgs.Optimizer;
-import brown.tac.adx.predictions.DailyPrediction;
 
 /**
  * A Modeler class that manages and encompasses each of the PredictionModel objects that
@@ -40,8 +39,8 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 	private HashMap<Integer, Double> avgCostPerWin;
 	private HashMap<AdNetworkKey, Double> bidPrices;
 	private AdNetworkReport adNetReport;
-	
-	
+
+
 	private Optimizer optimizer;
 	//	If DailyInfo is gone, then we need an internal measure of what day it is.
 	private int day = 0;
@@ -101,7 +100,12 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 				"hash = integer(0), stringsAsFactors = FALSE)");
 
 	}
-	
+
+	@Override
+	public AdxQuery[] getKeys(){
+		return (AdxQuery[]) modelKeys.toArray();
+	}
+
 	/**
 	 *  Sets the optimizer to signal when we have the regression data!
 	 * @param the Optimizer to set
@@ -140,7 +144,7 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 		bidCount.put(hash, bidCount.get(hash) + bids);
 		double newcpw = ((avgCostPerWin.get(hash) * entries) + costPerWin)/(entries + 1);
 		avgCostPerWin.put(hash, newcpw);
-		
+
 		re.eval("costmodel[" + nextEntry + ",] = c(\"" + gender + "\",\"" + age + "\",\"" + income
 				+ "\",\"" + publisher + "\",\"" + adType + "\",\"" + deviceType + "\"," + day + ','
 				+ bids + ',' + wins + ',' + cost + ',' + bidPrice + ',' + winRate + ','
@@ -148,17 +152,23 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 		System.out.println("Added row: " + nextEntry);
 		nextEntry++;
 	}
-	
-	public void updateBids(HashMap<AdNetworkKey, Double> bidPrices){
+
+	@Override
+	public void updateModeler(int day, HashMap<AdNetworkKey, Double> bidPrices){
 		this.bidPrices = bidPrices;
 		if(adNetReport != null)
 			update();
 	}
-	
-	public void updateReport(AdNetworkReport adNetReport){
+
+	@Override
+	public void updateModeler(int day, AdNetworkReport adNetReport){
 		this.adNetReport = adNetReport;
 		if(bidPrices != null)
 			update();
+	}
+	@Override
+	public void updateModeler(int day, CampaignReport cr){
+		//	Do nothin'
 	}
 
 	/* Modifies and returns the DailyPrediction object */
@@ -193,7 +203,7 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 		bidPrices = null;
 		adNetReport = null;
 	}
-	
+
 	//	Sets up a new regression, just 2 variables...
 	private void newRegression(AdxQuery q){
 		//re.eval("entrycount_" + q.hashCode() + " = 0");
@@ -221,7 +231,7 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 				"), data = cursubset)");//family=binomial(logit), 
 		re.eval(name2 + " = lm(as.numeric(" + y2 + ")~as.numeric(" + x + "), data = cursubset)");
 		System.out.println(System.currentTimeMillis() - tt);
-		
+
 		//	How to get coefficients... needed?
 		/*REXP res = re.eval("coefficients(" + name1 + ")");
 		double[] coef = res.asDoubleArray();
@@ -268,14 +278,16 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 		int totalBids = bidCount.get(key.hashCode());
 		String modelName = "model_bidprice_winrate_" + formatHash(key);
 		double wr = impressions/(double) totalBids;
-		REXP prediction = re.eval("predict(" + modelName + ", data.frame(winrate = " + wr + "))");
-		double rv = prediction.asDouble();
-		System.out.println("RV: " + rv);
 		try{
+			REXP prediction = re.eval("predict(" + modelName + ", data.frame(winrate = " + wr + "))");
+			double rv = prediction.asDouble();
+			System.out.println("RV: " + rv);
+			if(entryCount.get(key) < 3)
+				throw new Exception();
 			return rv;
 		}
 		catch(Exception e){
-			//	TODO: WHAT DO IF FAIL?!?!?!?
+			//	TODO: WHAT DO IF FAIL?!?!?!? Somehow signal default bidding strategy!
 			return -1;
 		}
 	}
@@ -285,17 +297,17 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 		double avg = avgCostPerWin.get(key.hashCode());
 		double bp = getBidForImpressions(key, impressions);
 		String modelName = "model_costperwin_bidprice_" + formatHash(key);
-		REXP prediction = re.eval("predict(" + modelName + ", data.frame(bidprice = " + bp + "))");
-		double rv = prediction.asDouble();
-		System.out.println("RV: " + rv);
-		rv *= impressions;
-		if(rv > avg * 1.5){
-			rv = avg * 1.5;
-		}
-		else if(rv < avg * .5){
-			rv = avg * .5;
-		}
 		try{
+			REXP prediction = re.eval("predict(" + modelName + ", data.frame(bidprice = " + bp + "))");
+			double rv = prediction.asDouble();
+			System.out.println("RV: " + rv);
+			rv *= impressions;
+			if(rv > avg * 1.5){
+				rv = avg * 1.5;
+			}
+			else if(rv < avg * .5){
+				rv = avg * .5;
+			}
 			if(entryCount.get(key) < 3)
 				throw new Exception();
 			return rv;
@@ -306,12 +318,12 @@ public class CostModel /*extends Model*/ implements ModelerInterface{
 	}
 
 	@Override
-	public double getRevenueForEffectiveImpressions(String campaignID,
+	public double getRevenueForEffectiveImpressions(int campaignID,
 			double effectiveImpressions) {
 		// Dummy? CostModel doesn't need this...
 		return 0;
 	}
-	
+
 	//	Return query hash as a String
 	private String formatHash(AdxQuery q){
 		String hash = "" + q.hashCode();
