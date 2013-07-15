@@ -108,8 +108,8 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 			// Find the next campaign to increment.
 			for (int c=0; c<numCampaigns; c++) {
 				// Get revenue for incrementing that campaign
-				double revenueForIncrement = _modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c]+effectiveImpressionIncrement)-
-						_modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c]);
+				double revenueForIncrement = _modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c]+effectiveImpressionIncrement, _day+1)-
+						_modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c], _day+1);
 
 				System.out.println("REVENUE INCREMENT -->"+revenueForIncrement);
 				// Get costs associated with incrementing that campaign.

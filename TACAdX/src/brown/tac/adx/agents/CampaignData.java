@@ -45,7 +45,9 @@ public class CampaignData {
 	public int getId(){
 		return id;
 	}
-	
+	public long getEndDay(){
+		return dayEnd;
+	}
 	public double getBudget(){
 		return budget;
 	}
