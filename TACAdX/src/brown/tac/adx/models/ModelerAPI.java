@@ -13,7 +13,7 @@ import brown.tac.adx.optimization.Optimizer;
 
 public interface ModelerAPI {
 	public abstract double getCostForImpressions(AdxQuery key, double impressions);  //key for this is tricky
-	public abstract double getRevenueForEffectiveImpressions(int campaignID, double effectiveImpressions, int day);
+	public abstract double getRevenueForEffectiveImpressions(double dayStartImps,double alreadyIncrementedImps, double newIncrementEffectiveImps, int campaignId, int day);
 	public double getBidForImpressions(AdxQuery key, double impressions);
 	
 	public AdNetworkKey queryToKey(AdxQuery adxQuery, int campaignID);

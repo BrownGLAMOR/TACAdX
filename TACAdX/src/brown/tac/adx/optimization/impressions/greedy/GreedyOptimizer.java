@@ -50,7 +50,7 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 	//to be called by modeler
 	public void makeDecision(){
 		Integer[] campaignList = (Integer[]) _campaignMap.keySet().toArray();
-		double[][] allocation_kc = this.solve(_keys, _campaignMap,campaignList, 10, 2);
+		double[][] allocation_kc = this.solve(_keys, _campaignMap,campaignList, 20, 4);
 		_bidBundle = new AdxBidBundle();
 		_bidMap = new HashMap<AdNetworkKey, Double>();
 		for (int k = 0; k<_keys.length;k++){
@@ -108,14 +108,14 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 			// Find the next campaign to increment.
 			for (int c=0; c<numCampaigns; c++) {
 				// Get revenue for incrementing that campaign
-				double revenueForIncrement = _modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c]+effectiveImpressionIncrement, _day+1)-
-						_modeler.getRevenueForEffectiveImpressions(campaignList[c], z_c[c], _day+1);
-
-				System.out.println("REVENUE INCREMENT -->"+revenueForIncrement);
+				CampaignData currCampaign = campaignMap.get(campaignList[c]);
+				double revenueForIncrement = _modeler.getRevenueForEffectiveImpressions(currCampaign.effectiveImps(), z_c[c],effectiveImpressionIncrement,campaignList[c], _day+1);
+																//day+1 because _day is incremented after this is executed each day
+				//System.out.println("REVENUE INCREMENT -->"+revenueForIncrement);
 				// Get costs associated with incrementing that campaign.
 				double costForIncrement = 0;
 				double[][] potentialIncrement_kc = new double[numKeys][numCampaigns];
-				CampaignData currCampaign = campaignMap.get(campaignList[c]);
+				
 				for (int i=0; i<numSubIncrements; i++) {
 					// Choose the sub-increment with the lowest marginal cost
 					double cheapestSubIncrementCost = Double.POSITIVE_INFINITY;
@@ -127,7 +127,7 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 									currCampaign.effectiveImpressionsMultiplier(currKey.getAdType(), currKey.getDevice());
 							double subIncrementCost = _modeler.getCostForImpressions(currKey,y_k[k]+impressionSubIncrement+potentialIncrement_kc[k][c])
 											- _modeler.getCostForImpressions(currKey, y_k[k] + potentialIncrement_kc[k][c]);
-							System.out.println("Key -> "+k+"... subIncCost -> "+subIncrementCost);
+				//			System.out.println("Key -> "+k+"... subIncCost -> "+subIncrementCost);
 							if (subIncrementCost < cheapestSubIncrementCost) {
 								cheapestSubIncrementKey = k;
 								cheapestSubIncrementCost = subIncrementCost;
@@ -149,14 +149,16 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 			}
 
 			if (profitForBestIncrement > 0) {
-				System.out.println("PROFIT");
-				System.out.println(profitForBestIncrement);
+				//System.out.println("PROFIT");
+				//System.out.println(profitForBestIncrement);
 				// Make the increment
-				for (int k=0; k<numKeys; k++) {
-					for (int c=0; c<numCampaigns; c++) {
+				for (int c=0; c<numCampaigns; c++) {
+					CampaignData currCampaign = campaignMap.get(campaignList[c]);
+					for (int k=0; k<numKeys; k++) {
 						x_kc[k][c] += bestIncrement_kc[k][c];
 						y_k[k] += bestIncrement_kc[k][c];
-						z_c[c] += bestIncrement_kc[k][c];  //needs to be effective impressions
+						z_c[c] += bestIncrement_kc[k][c]
+								*currCampaign.effectiveImpressionsMultiplier(keys[k].getAdType(), keys[k].getDevice());  //needs to be effective impressions
 					}
 				} 
 			} else {

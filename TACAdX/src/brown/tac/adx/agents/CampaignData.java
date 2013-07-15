@@ -95,6 +95,7 @@ public class CampaignData {
 		
 	}
 
+
 	@Override
 	public String toString() {
 		return "Campaign ID " + id + ": " + "day " + dayStart + " to "

@@ -89,9 +89,8 @@ public class Modeler implements ModelerAPI {
 	}
 	
 	@Override
-	public double getRevenueForEffectiveImpressions(int campaignID,
-			double effectiveImpressions) {
-		return _revenueModel.getRevenueForEffectiveImpressions(effectiveImpressions, campaignID);
+	public double getRevenueForEffectiveImpressions(double dayStartImps,double alreadyIncrementedImps, double newIncrementEffectiveImps, int campaignId, int day){
+		return _revenueModel.getRevenueForEffectiveImpressions(dayStartImps, alreadyIncrementedImps, newIncrementEffectiveImps, campaignId, day);
 	}
 
 	@Override

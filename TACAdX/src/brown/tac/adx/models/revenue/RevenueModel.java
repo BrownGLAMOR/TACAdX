@@ -14,10 +14,15 @@ public class RevenueModel extends RevenueModelForCampaign {
 	public RevenueModel(Map<Integer, CampaignData> campaignMap){
 		_campaignMap = campaignMap;
 	}
-	public double getRevenueForEffectiveImpressions(double effectiveImpressions, int campaignId, int day) {
+	
+	//baselineImpressions is to allow for the functionality eric described in his proposal for accounting
+	//for duration of campaigns.  this way, baseline can be an intermediate increment, not just
+	//the amount of impressions the campaign started with that day
+	public double getRevenueForEffectiveImpressions(double dayStartImps,double alreadyIncrementedImps, double newIncrementImps, int campaignId, int day) {
 		CampaignData campaign = _campaignMap.get(campaignId);
 		int daysRemaining = (int) (campaign.getEndDay()-day);
-		return (1.0/daysRemaining)*getTrueDeltaRevenue(effectiveImpressions*daysRemaining, campaignId);
+		return (1.0/daysRemaining)*(getTrueDeltaRevenue(dayStartImps+(newIncrementImps+alreadyIncrementedImps)*daysRemaining, campaignId)
+				-getTrueDeltaRevenue(dayStartImps+(newIncrementImps*daysRemaining), campaignId));
 	}
 	
 	public double getTrueDeltaRevenue(double effectiveImpressions, int campaignId){
