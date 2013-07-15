@@ -100,9 +100,6 @@ public class CostModel /*extends Model*/{
 
 	}
 
-	public AdxQuery[] getKeys(){
-		return (AdxQuery[]) modelKeys.toArray();
-	}
 
 	/**
 	 *  Sets the optimizer to signal when we have the regression data!
@@ -192,9 +189,10 @@ public class CostModel /*extends Model*/{
 			updateRegression(q);
 		}
 		//	TODO: Whatever function in Optimizer needs to be called, call it!
-		//	optimizer.trigger();
-		bidPrices = null;
+		
+		bidPrices = optimizer.trigger();
 		adNetReport = null;
+		
 	}
 
 	//	Sets up a new regression, just 2 variables...
@@ -341,13 +339,14 @@ public class CostModel /*extends Model*/{
 		return rv;
 	}
 
-	public static AdNetworkKey queryToKey(AdxQuery q){
+	public static AdNetworkKey queryToKey(AdxQuery q, int campaignId){
 		//	Convert the query's MarketSegments HashSet into AdNetworkKey attributes.
 		AdNetworkKey rv = new AdNetworkKey();
 		Set<MarketSegment> mkt = q.getMarketSegments();
 		rv.setGender(mkt.contains(MarketSegment.MALE) ? Gender.male : Gender.female);
 		//	Highly inexact, but AdxQuery doesn't have that precision
 		rv.setAge(mkt.contains(MarketSegment.YOUNG) ? Age.Age_18_24 : Age.Age_65_PLUS);
+		rv.setCampaignId(campaignId);
 		rv.setIncome(mkt.contains(MarketSegment.HIGH_INCOME) ? Income.very_high : Income.low);
 		rv.setPublisher(q.getPublisher());
 		rv.setAdType(q.getAdType());

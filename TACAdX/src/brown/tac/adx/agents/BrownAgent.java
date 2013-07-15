@@ -6,6 +6,7 @@ package brown.tac.adx.agents;
  * Data flow for bids?
  * Construct bidBundle and customHashMap is kinda expensive?
  * Does the CostModel need campaignReports?
+ * setOptimizer in CostModel?
  */
 
 import java.util.HashMap;

@@ -1,9 +1,11 @@
 package brown.tac.adx.optimization.impressions.greedy;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
+import tau.tac.adx.report.adn.AdNetworkKey;
 import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.ModelerAPI;
 import edu.umich.eecs.tac.props.Ad;
@@ -41,15 +43,15 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 	
 	//to be called by modeler
 	public void makeDecision(){
-		Map<Integer, CampaignData> campaignMap = _campaignMap;
-		Integer[] campaignList = (Integer[]) campaignMap.keySet().toArray();
-		double[][] allocation_kc = this.solve(_keys, campaignMap,campaignList, 10, 2);
+		Integer[] campaignList = (Integer[]) _campaignMap.keySet().toArray();
+		double[][] allocation_kc = this.solve(_keys, _campaignMap,campaignList, 10, 2);
 		AdxBidBundle bidBundle = new AdxBidBundle();
+		HashMap<AdNetworkKey, Double> bidMapForCostModeler = new HashMap<AdNetworkKey, Double>();
 		for (int k = 0; k<_keys.length;k++){
 			for (int c = 0; c<campaignList.length; c++){
-				bidBundle.addQuery(_keys[k], _modeler.getBidForImpressions(_keys[k], allocation_kc[k][c]),
-					new Ad(null), campaignList[c], (int)Math.round(allocation_kc[k][c])); //weight is equivalent to normalized value of bid
-				//also construct Map: ADNetKey -> Double 
+				double bid = _modeler.getBidForImpressions(_keys[k], allocation_kc[k][c]);
+				bidBundle.addQuery(_keys[k], bid, new Ad(null), campaignList[c], (int)Math.round(allocation_kc[k][c])); //weight is equivalent to normalized value of bid
+				bidMapForCostModeler.put(_modeler.queryToKey(_keys[k],  campaignList[c]), bid);
 			}
 		}
 		//bidBundle.get

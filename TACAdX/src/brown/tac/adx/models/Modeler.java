@@ -98,6 +98,9 @@ public class Modeler implements ModelerAPI {
 		return _costModel.getBidForImpressions(key, impressions);
 	}
 
+	public AdNetworkKey queryToKey(AdxQuery query, int campaignId){
+		return CostModel.queryToKey(query, campaignId);
+	}
 
 	@Override
 	public void updateModeler(int day, HashMap<AdNetworkKey, Double> bidBundle) {
