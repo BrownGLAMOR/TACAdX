@@ -1,5 +1,12 @@
 package brown.tac.adx.agents;
 
+/*
+ * Questions:
+ * what about allCampaigns?
+ * Data flow for bids?
+ * Construct bidBundle and customHashMap is kinda expensive?
+ * Does the CostModel need campaignReports?
+ */
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,10 +17,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-
-
-
 
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
@@ -27,6 +30,7 @@ import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
 import tau.tac.adx.props.PublisherCatalog;
 import tau.tac.adx.props.PublisherCatalogEntry;
+import tau.tac.adx.report.adn.AdNetworkKey;
 import tau.tac.adx.report.adn.AdNetworkReport;
 import tau.tac.adx.report.adn.MarketSegment;
 import tau.tac.adx.report.demand.AdNetBidMessage;
@@ -37,6 +41,7 @@ import tau.tac.adx.report.demand.CampaignReportKey;
 import tau.tac.adx.report.demand.InitialCampaignMessage;
 import tau.tac.adx.report.publisher.AdxPublisherReport;
 import tau.tac.adx.report.publisher.AdxPublisherReportEntry;
+import brown.tac.adx.models.CostModel;
 import brown.tac.adx.models.Modeler;
 import brown.tac.adx.models.ModelerAPI;
 import brown.tac.adx.optimization.Optimizer;
@@ -149,9 +154,10 @@ public class BrownAgent extends Agent {
 
 	public BrownAgent() {
 		campaignReports = new LinkedList<CampaignReport>();
-		_modeler = (ModelerAPI) new NullModeler("");
-		_optimizer = new NullOptimizer("", _modeler);
-		_dailyInfoList = new LinkedList<DailyInfo>();
+		myCampaigns = new HashMap<Integer, CampaignData>();
+		_modeler =  new Modeler(myCampaigns);
+		_optimizer = new Optimizer(_modeler, myCampaigns, queries);
+//		_dailyInfoList = new LinkedList<DailyInfo>();
 		ucsTargetLevel = 0.8;
 		persistantCampaignBid = 0.1;
 	}
@@ -161,14 +167,18 @@ public class BrownAgent extends Agent {
 		//System.out.println("DAY: "+day);
 
 		//if the dailyinfo list has not been updated, update it. 
-		if (_dailyInfoList.size()== day) {
-			_dailyInfoList.add(day, new DailyInfo(day));
-		}
+//		if (_dailyInfoList.size()== day) {
+//			DailyInfo di = new DailyInfo(day);
+//			di.setDailyBids(bidPrices);
+//			_dailyInfoList.add(day, di);
+//		}
 
 		try {
 
 			Transportable content = message.getContent();
 
+//			DailyInfo newDay = _dailyInfoList.get(day);   Not using this right?
+			
 
 			if(content==null){
 				System.out.println("NULL");
@@ -179,30 +189,38 @@ public class BrownAgent extends Agent {
 			if (content instanceof InitialCampaignMessage) {
 				//System.out.println("init campaign");
 				handleInitialCampaignMessage((InitialCampaignMessage) content);
+//				newDay.setInitialCampaignMessage((InitialCampaignMessage) content);
 			} else if (content instanceof CampaignOpportunityMessage) {
 				//System.out.println("campaign opp");
 				handleCampaignOpportunityMessage((CampaignOpportunityMessage) content);
+//				newDay.setCampaignOpportunityMessage((CampaignOpportunityMessage) content);
 			} else if (content instanceof CampaignReport) {
 				//System.out.println("camp report");
 				handleCampaignReport((CampaignReport) content);
+//				newDay.setCampaignReport((CampaignReport) content);
 			} else if (content instanceof AdNetworkDailyNotification) {
 				//System.out.println("adnet daily notification");
 				handleAdNetworkDailyNotification((AdNetworkDailyNotification) content);
+//				newDay.setAdNetworkDailyNotification((AdNetworkDailyNotification) content);
 			} else if (content instanceof AdxPublisherReport) { //may not be used
 				//System.out.println("adx pub report");
 				handleAdxPublisherReport((AdxPublisherReport) content);
 			} else if (content instanceof SimulationStatus) {
 				//System.out.println("sim status");
 				handleSimulationStatus((SimulationStatus) content);
+//				newDay.setSimulationStatus((SimulationStatus) content);
 			} else if (content instanceof PublisherCatalog) { 
 				//System.out.println("pub catalogue");
 				handlePublisherCatalog((PublisherCatalog) content);
-			} else if (content instanceof AdNetworkReport) { //maybe not used
-				//System.out.println("adnet report");
+//				newDay.setPublisherCatalog((PublisherCatalog) content);
+			} else if (content instanceof AdNetworkReport) {
+				System.out.println("adnet report");
 				handleAdNetworkReport((AdNetworkReport) content);
+//				newDay.setAdNetworkReport((AdNetworkReport) content);
 			} else if (content instanceof StartInfo) {
 				//System.out.println("start info");
 				handleStartInfo((StartInfo) content);
+//				newDay.setStartInfo((StartInfo) content);
 			} else if (content instanceof BankStatus) {
 				//System.out.println("bank status");
 				handleBankStatus((BankStatus) content);
@@ -380,7 +398,6 @@ public class BrownAgent extends Agent {
 			persistantCampaignBid = persistantCampaignBid * 0.8;
 		}
 
-		_modeler.updateModeler(day, notificationMessage);
 	/*	log.info("Day " + day + ": " + campaignAllocatedTo
 				+ ". UCS Level set to " + notificationMessage.getServiceLevel()
 				+ " at price " + notificationMessage.getPrice()
@@ -410,20 +427,28 @@ public class BrownAgent extends Agent {
 			sendMessage(adxAgentAddress, bidBundle);
 		}
 
-		_modeler.updateModeler(day, bidBundle);
+//		NEED TO UPDATE MODELER WITH BIDBUNDLE
+//		_modeler.updateModeler(day, bidBundle);
 		//	log.info("Day " + day + " ended. Starting next day");
 		++day;
 	}
 
-
+	
+	private HashMap<AdNetworkKey, Double> bidPrices;
+	
 
 	/**
 	 * Campaigns performance w.r.t. each allocated campaign
 	 */
 	private void handleCampaignReport(CampaignReport campaignReport) {
 
+
 		campaignReports.add(campaignReport);
-		_modeler.updateModeler(day, campaignReport);
+
+		bidBundle = new AdxBidBundle();
+		bidPrices = new HashMap<AdNetworkKey, Double>();
+		int entrySum = 0;
+		
 		/*
 		 * for each campaign, the accumulated statistics from day 1 up to day
 		 * n-1 are reported
@@ -538,8 +563,12 @@ public class BrownAgent extends Agent {
 							++entCount;
 							defaultBundle.addQuery(queries[i], (rbid*campaign.targetSegments.size()/queries.length), new Ad(null),
 									campaign.id, 1);
+							AdNetworkKey k = CostModel.queryToKey(queries[i]);
+							k.setCampaignId(campaign.id);
+							bidPrices.put(k, rbid);
 						}
 					}
+
 
 
 
@@ -550,6 +579,17 @@ public class BrownAgent extends Agent {
 							- campaign.stats.getCost());
 					defaultBundle.setCampaignDailyLimit(campaign.id,
 							(int) impressionLimit, budgetLimit);
+
+//					ASK KEN ABOUT THIS
+//					if (segmentsList.size() == 0) {
+//						++entCount;
+//						bidBundle.addQuery(queries[i], rbid, new Ad(null),
+//								campaign.id, 1);
+//						AdNetworkKey k = CostModel.queryToKey(queries[i]);
+//						k.setCampaignId(campaign.id);
+//						bidPrices.put(k, rbid);
+//					}
+
 				}
 			}
 		}
@@ -627,7 +667,7 @@ public class BrownAgent extends Agent {
 		/* initial bid between 0.1 and 0.2 */
 		ucsBid = 0.1 + 0.1*randomGenerator.nextDouble();
 
-		myCampaigns = new HashMap<Integer, CampaignData>();
+		
 		log.fine("AdNet " + getName() + " simulationSetup");
 	}
 

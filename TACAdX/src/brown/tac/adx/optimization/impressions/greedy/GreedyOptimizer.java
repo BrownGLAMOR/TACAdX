@@ -20,10 +20,15 @@ import edu.umich.eecs.tac.props.Ad;
 public class GreedyOptimizer extends ImpressionsOptimizer{
 	
 	private AdxBidBundle _bundle;
+	private Map<Integer, CampaignData> _campaignMap;
+	private AdxQuery[] _keys;
 	private int _day;
 	
-	public GreedyOptimizer(ModelerAPI modeler) {
+	public GreedyOptimizer(ModelerAPI modeler, Map<Integer, CampaignData> campaignMap, AdxQuery[] keys) {
 		super(modeler);
+		_campaignMap = campaignMap;
+		_keys = keys;
+		
 	}
 
 	public AdxBidBundle getBidBundle(int day){
@@ -36,18 +41,18 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 	
 	//to be called by modeler
 	public void makeDecision(){
-		AdxQuery[] keys = _modeler.getKeys();
-		Map<Integer, CampaignData> campaignMap = _modeler.getCampaignMap();
+		Map<Integer, CampaignData> campaignMap = _campaignMap;
 		Integer[] campaignList = (Integer[]) campaignMap.keySet().toArray();
-		double[][] allocation_kc = this.solve(keys, campaignMap,campaignList, 10, 2);
+		double[][] allocation_kc = this.solve(_keys, campaignMap,campaignList, 10, 2);
 		AdxBidBundle bidBundle = new AdxBidBundle();
-		for (int k = 0; k<keys.length;k++){
+		for (int k = 0; k<_keys.length;k++){
 			for (int c = 0; c<campaignList.length; c++){
-				bidBundle.addQuery(keys[k], _modeler.getBidForImpressions(keys[k].toString(), allocation_kc[k][c]),
+				bidBundle.addQuery(_keys[k], _modeler.getBidForImpressions(_keys[k], allocation_kc[k][c]),
 					new Ad(null), campaignList[c], (int)Math.round(allocation_kc[k][c])); //weight is equivalent to normalized value of bid
+				//also construct Map: ADNetKey -> Double 
 			}
 		}
-		_day++;
+		//bidBundle.get
 	}
 	
 	/**  
@@ -112,12 +117,8 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 						if (currCampaign.isFeasibleToAllocate(keys[k].getMarketSegments())) {
 							double impressionSubIncrement = effectiveImpressionSubIncrement /
 									currCampaign.effectiveImpressionsMultiplier(currKey.getAdType(), currKey.getDevice());
-							double minuend = _modeler.getCostForImpressions(currKey.toString(),y_k[k]+impressionSubIncrement+potentialIncrement_kc[k][c]);
-							double subtrahend = 0;
-							if (y_k[k] > 0 || potentialIncrement_kc[k][c] > 0){  //to ensure that y-intercept of cost model is accounted for
-								subtrahend = _modeler.getCostForImpressions(currKey.toString(), y_k[k] + potentialIncrement_kc[k][c]);
-							}
-							double subIncrementCost = minuend - subtrahend;
+							double subIncrementCost = _modeler.getCostForImpressions(currKey,y_k[k]+impressionSubIncrement+potentialIncrement_kc[k][c])
+											- _modeler.getCostForImpressions(currKey, y_k[k] + potentialIncrement_kc[k][c]);
 							System.out.println("Key -> "+k+"... subIncCost -> "+subIncrementCost);
 							if (subIncrementCost < cheapestSubIncrementCost) {
 								cheapestSubIncrementKey = k;

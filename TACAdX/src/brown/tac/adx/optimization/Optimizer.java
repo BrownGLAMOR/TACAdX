@@ -1,12 +1,14 @@
 package brown.tac.adx.optimization;
 
 import java.util.LinkedList;
+import java.util.Map;
 
 import tau.tac.adx.props.AdxBidBundle;
+import tau.tac.adx.props.AdxQuery;
+import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.ModelerAPI;
 import brown.tac.adx.optimization.impressions.greedy.GreedyOptimizer;
 import brown.tac.adx.optimization.impressions.greedy.ImpressionsOptimizer;
-import brown.tac.adx.predictions.DailyPrediction;
 
 public class Optimizer {
 	
@@ -27,11 +29,10 @@ public class Optimizer {
 	
 	ImpressionsOptimizer _impressionsOptimizer;
 	
-	//MAKE THIS NOT SUCK
 	
-	public Optimizer(String filename, ModelerAPI modeler) {
+	public Optimizer(/*String filename,*/ ModelerAPI modeler, Map<Integer, CampaignData> campaignMap, AdxQuery[] keys) {
 		_modeler = modeler;
-		_impressionsOptimizer = new GreedyOptimizer(_modeler);
+		_impressionsOptimizer = new GreedyOptimizer(_modeler, campaignMap, keys);
 //		_optimizationAlgList = new LinkedList<OptimizationAlg>();
 //		_optimizationAlgList.add(new GreedyOptimizer(_modeler));
 //		this.parseOptimizationAlgs(filename);

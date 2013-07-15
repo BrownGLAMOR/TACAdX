@@ -19,6 +19,8 @@ public class RevenueModel extends RevenueModelForCampaign {
 		double err = (2/_a)*(Math.atan(_a*(effectiveImpressions/reach)-_b)-Math.atan(-1*_b));
 		return err*_campaignMap.get(campaignId).getBudget();
 	}
+	
+	
 
 	@Override
 	public void update(DailyPrediction prediction) {
