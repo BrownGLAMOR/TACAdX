@@ -2,11 +2,7 @@ package brown.tac.adx.agents;
 
 /*
  * Questions:
- * what about allCampaigns?
- * Data flow for bids?
- * Construct bidBundle and customHashMap is kinda expensive?
- * Does the CostModel need campaignReports?
- * setOptimizer in CostModel?
+ * Are we double adding days?  in handlecampaignOpportunity Message
  */
 
 import java.util.HashMap;
@@ -158,6 +154,7 @@ public class BrownAgent extends Agent {
 		myCampaigns = new HashMap<Integer, CampaignData>();
 		_modeler =  new Modeler(myCampaigns);
 		_optimizer = new Optimizer(_modeler, myCampaigns, queries);
+		_modeler.setOptimizer(_optimizer);
 //		_dailyInfoList = new LinkedList<DailyInfo>();
 		ucsTargetLevel = 0.8;
 		persistantCampaignBid = 0.1;
@@ -417,6 +414,7 @@ public class BrownAgent extends Agent {
 
 		// Make calls to sendMessage to tell the server about our decisions
 		bidBundle = _optimizer.getBidBundle(day);
+		bidPrices = _optimizer.getBidMapForCostModel(day);
 
 		if (bidBundle != null) {
 			//This is where the bid bundle for bids in the AdExchange for Impressions is sent to 
@@ -424,13 +422,12 @@ public class BrownAgent extends Agent {
 			//log.info("Day " + day + ": Sending BidBundle");
 			sendMessage(adxAgentAddress, bidBundle);
 		} else {
-			bidBundle = defaultBidBundle();
+			bidBundle = defaultBidBundle(); //this also mutates bidPrices to correct value
 			sendMessage(adxAgentAddress, bidBundle);
 		}
 
-//		NEED TO UPDATE MODELER WITH BIDBUNDLE
-//		_modeler.updateModeler(day, bidBundle);
-		//	log.info("Day " + day + " ended. Starting next day");
+		_modeler.updateModeler(day, bidPrices);
+				//	log.info("Day " + day + " ended. Starting next day");
 		++day;
 	}
 
@@ -494,6 +491,7 @@ public class BrownAgent extends Agent {
 	private AdxBidBundle defaultBidBundle(){
 
 		AdxBidBundle defaultBundle = new AdxBidBundle();
+		bidPrices = new HashMap<AdNetworkKey, Double>();
 
 		for (CampaignData campaign : myCampaigns.values()) {
 
@@ -564,32 +562,18 @@ public class BrownAgent extends Agent {
 							++entCount;
 							defaultBundle.addQuery(queries[i], (rbid*campaign.targetSegments.size()/queries.length), new Ad(null),
 									campaign.id, 1);
-							AdNetworkKey k = CostModel.queryToKey(queries[i]);
-							k.setCampaignId(campaign.id);
+							AdNetworkKey k = CostModel.queryToKey(queries[i], campaign.id);
 							bidPrices.put(k, rbid);
 						}
 					}
-
-
-
-
-
 
 					double impressionLimit = 0.5 * campaign.impsTogo();
 					double budgetLimit = 0.5 * Math.max(0, campaign.budget
 							- campaign.stats.getCost());
 					defaultBundle.setCampaignDailyLimit(campaign.id,
 							(int) impressionLimit, budgetLimit);
+					//Where is this being used.  It is necessary in the non-default case
 
-//					ASK KEN ABOUT THIS
-//					if (segmentsList.size() == 0) {
-//						++entCount;
-//						bidBundle.addQuery(queries[i], rbid, new Ad(null),
-//								campaign.id, 1);
-//						AdNetworkKey k = CostModel.queryToKey(queries[i]);
-//						k.setCampaignId(campaign.id);
-//						bidPrices.put(k, rbid);
-//					}
 
 				}
 			}
@@ -643,7 +627,7 @@ public class BrownAgent extends Agent {
 	 * @param AdNetworkReport
 	 */
 	private void handleAdNetworkReport(AdNetworkReport adnetReport) {
-
+		_modeler.updateModeler(day, adnetReport);
 	//	log.info("Day "+ day + " : AdNetworkReport");
 
 

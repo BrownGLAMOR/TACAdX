@@ -21,7 +21,8 @@ import edu.umich.eecs.tac.props.Ad;
  */
 public class GreedyOptimizer extends ImpressionsOptimizer{
 	
-	private AdxBidBundle _bundle;
+	private AdxBidBundle _bidBundle;
+	private HashMap<AdNetworkKey, Double> _bidMap;
 	private Map<Integer, CampaignData> _campaignMap;
 	private AdxQuery[] _keys;
 	private int _day;
@@ -34,27 +35,32 @@ public class GreedyOptimizer extends ImpressionsOptimizer{
 	}
 
 	public AdxBidBundle getBidBundle(int day){
-		if (day != _day){
+		if (day >_day){
 			return null;
 		}
-		return _bundle;
+		return _bidBundle;
 	}
-	
+	public HashMap<AdNetworkKey, Double> getBidMapForCostModel(int day){
+		if (day > _day){
+			return null;
+		}
+		return _bidMap;
+	}
 	
 	//to be called by modeler
 	public void makeDecision(){
 		Integer[] campaignList = (Integer[]) _campaignMap.keySet().toArray();
 		double[][] allocation_kc = this.solve(_keys, _campaignMap,campaignList, 10, 2);
-		AdxBidBundle bidBundle = new AdxBidBundle();
-		HashMap<AdNetworkKey, Double> bidMapForCostModeler = new HashMap<AdNetworkKey, Double>();
+		_bidBundle = new AdxBidBundle();
+		_bidMap = new HashMap<AdNetworkKey, Double>();
 		for (int k = 0; k<_keys.length;k++){
 			for (int c = 0; c<campaignList.length; c++){
 				double bid = _modeler.getBidForImpressions(_keys[k], allocation_kc[k][c]);
-				bidBundle.addQuery(_keys[k], bid, new Ad(null), campaignList[c], (int)Math.round(allocation_kc[k][c])); //weight is equivalent to normalized value of bid
-				bidMapForCostModeler.put(_modeler.queryToKey(_keys[k],  campaignList[c]), bid);
+				_bidBundle.addQuery(_keys[k], bid, new Ad(null), campaignList[c], (int)Math.round(allocation_kc[k][c])); //weight is equivalent to normalized value of bid
+				_bidMap.put(_modeler.queryToKey(_keys[k],  campaignList[c]), bid);
 			}
 		}
-		//bidBundle.get
+		_day++;
 	}
 	
 	/**  

@@ -13,6 +13,7 @@ import tau.tac.adx.report.demand.CampaignReport;
 import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.revenue.RevenueModel;
 //Many things to import for a DOM parser
+import brown.tac.adx.optimization.Optimizer;
 
 /**
  * Class containing a list of models and updating them in order of dependencies
@@ -111,6 +112,12 @@ public class Modeler implements ModelerAPI {
 	@Override
 	public void updateModeler(int day, AdNetworkReport adNetReport) {
 		_costModel.updateModeler(day, adNetReport);
+		
+	}
+
+	@Override
+	public void setOptimizer(Optimizer optimizer) {
+		_costModel.setOptimizer(optimizer);
 		
 	}
 	

@@ -189,8 +189,8 @@ public class CostModel /*extends Model*/{
 			updateRegression(q);
 		}
 		//	TODO: Whatever function in Optimizer needs to be called, call it!
-		
-		bidPrices = optimizer.trigger();
+		optimizer.makeImpressionsDecision();
+		bidPrices = null;
 		adNetReport = null;
 		
 	}

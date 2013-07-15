@@ -9,6 +9,7 @@ import tau.tac.adx.report.adn.AdNetworkKey;
 import tau.tac.adx.report.adn.AdNetworkReport;
 import tau.tac.adx.report.demand.CampaignReport;
 import brown.tac.adx.agents.CampaignData;
+import brown.tac.adx.optimization.Optimizer;
 
 public interface ModelerAPI {
 	public abstract double getCostForImpressions(AdxQuery key, double impressions);  //key for this is tricky
@@ -20,4 +21,5 @@ public interface ModelerAPI {
 	
 	public void updateModeler(int day, HashMap<AdNetworkKey, Double> bidBundle);
 	public void updateModeler(int day, AdNetworkReport adNetworkReport);
+	public abstract void setOptimizer(Optimizer optimizer);
 }

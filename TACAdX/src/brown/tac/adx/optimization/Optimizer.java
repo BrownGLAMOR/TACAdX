@@ -1,10 +1,12 @@
 package brown.tac.adx.optimization;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
 import tau.tac.adx.props.AdxBidBundle;
 import tau.tac.adx.props.AdxQuery;
+import tau.tac.adx.report.adn.AdNetworkKey;
 import brown.tac.adx.agents.CampaignData;
 import brown.tac.adx.models.ModelerAPI;
 import brown.tac.adx.optimization.impressions.greedy.GreedyOptimizer;
@@ -43,6 +45,9 @@ public class Optimizer {
 	}
 	public AdxBidBundle getBidBundle(int day){
 		return _impressionsOptimizer.getBidBundle(day);
+	}
+	public HashMap<AdNetworkKey, Double> getBidMapForCostModel(int day){
+		return _impressionsOptimizer.getBidMapForCostModel(day);
 	}
 //	public void makeDecisions(DailyPrediction pred) {
 //		for (OptimizationAlg alg : _optimizationAlgList) {
